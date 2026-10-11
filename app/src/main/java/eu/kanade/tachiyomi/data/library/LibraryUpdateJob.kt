@@ -27,6 +27,8 @@ import eu.kanade.tachiyomi.data.LibraryUpdateStatus
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.library.komga.KomgaIncrementalFilter
 import eu.kanade.tachiyomi.data.library.komga.KomgaWatermarks
+import eu.kanade.tachiyomi.data.library.komga.encodeRetryIds
+import eu.kanade.tachiyomi.data.library.komga.parseKomgaSeriesUrl
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.data.sync.SyncDataJob
 import eu.kanade.tachiyomi.data.track.TrackStatus
@@ -145,14 +147,17 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     // KMK -->
     private var pendingKomgaWatermarks: Map<String, String> = emptyMap()
     private var pendingKomgaSkippedCount = 0
+    private var pendingKomgaFailedIds: Set<Long> = emptySet()
     private var komgaRanIncremental = false
 
     private val komgaFilter by lazy {
         KomgaIncrementalFilter(
             context = context,
-            client = Injekt.get<NetworkHelper>().client.newBuilder().dns(Dns.SYSTEM).build(),
+            client = Injekt.get<NetworkHelper>().client.newBuilder()
+                .dns(Dns.SYSTEM)
+                .callTimeout(5, TimeUnit.SECONDS)
+                .build(),
             json = Injekt.get(),
-            libraryPreferences = libraryPreferences,
         )
     }
     // KMK <--
@@ -260,6 +265,8 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             libraryPreferences.komgaWatermarks().set(KomgaWatermarks.encode(pendingKomgaWatermarks))
         }
         libraryPreferences.komgaSkippedCount().set(pendingKomgaSkippedCount)
+        // 本次失败的 Komga 条目下次强制重试一次，避免一次瞬时失败 = 此后永不再自动更新
+        libraryPreferences.komgaRetryIds().set(encodeRetryIds(pendingKomgaFailedIds))
     }
     // KMK <--
 
@@ -405,6 +412,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             val outcome = komgaFilter.apply(
                 candidates = filtered,
                 watermarksRaw = libraryPreferences.komgaWatermarks().get(),
+                retryIdsRaw = libraryPreferences.komgaRetryIds().get(),
                 policy = libraryPreferences.komgaUnavailablePolicy().get(),
             )
             filtered = outcome.kept
@@ -568,6 +576,14 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                 failedUpdates.size,
             )
         }
+
+        // KMK -->
+        pendingKomgaFailedIds = failedUpdates
+            .map { it.first }
+            .filter { parseKomgaSeriesUrl(it.url) != null }
+            .map { it.id }
+            .toSet()
+        // KMK <--
     }
 
     private fun downloadChapters(manga: Manga, chapters: List<Chapter>) {

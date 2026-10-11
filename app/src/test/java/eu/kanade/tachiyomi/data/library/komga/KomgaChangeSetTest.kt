@@ -36,6 +36,8 @@ class KomgaChangeSetTest {
         result.changedIds shouldBe setOf("A", "B")
         requested shouldBe listOf(0, 1)
         result.complete shouldBe true
+        result.pages shouldBe 2
+        result.failureReason shouldBe null
         result.maxSeen shouldBe "2026-10-12T03:00:00Z"
         result.empty shouldBe false
     }
@@ -78,6 +80,7 @@ class KomgaChangeSetTest {
 
         result.complete shouldBe false
         requested shouldBe listOf(0, 1)
+        result.pages shouldBe 2
     }
 
     @Test
@@ -90,6 +93,8 @@ class KomgaChangeSetTest {
         result.complete shouldBe false
         result.changedIds shouldBe emptySet()
         result.maxSeen shouldBe null
+        result.pages shouldBe 0
+        result.failureReason shouldBe "timeout"
     }
 
     @Test

@@ -98,6 +98,12 @@ class LibraryPreferences(
         Preference.appStateKey("library_update_komga_skipped_count"),
         0,
     )
+
+    /** 上一次更新失败的 Komga 条目 id（逗号分隔），下次强制重试一次。 */
+    fun komgaRetryIds() = preferenceStore.getString(
+        Preference.appStateKey("library_update_komga_retry_ids"),
+        "",
+    )
     // KMK <--
 
     fun showContinueReadingButton() = preferenceStore.getBoolean(

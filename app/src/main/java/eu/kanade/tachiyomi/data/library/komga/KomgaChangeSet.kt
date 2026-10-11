@@ -22,12 +22,16 @@ sealed interface KomgaPageResult {
  * @param maxSeen 本次看到的最大 lastModified（原样字符串），作为成功后的新水位线
  * @param complete false 表示命中页数/时间上限或请求失败，调用方应按策略回退
  * @param empty Komga 上一本书都没有 → 调用方视为「全部有变化」
+ * @param pages 成功取到的页数（用于日志诊断）
+ * @param failureReason 失败原因（HTTP 码 / 异常消息 / timeout），不含凭据
  */
 data class KomgaChangeSet(
     val changedIds: Set<String>,
     val maxSeen: String?,
     val complete: Boolean,
     val empty: Boolean,
+    val pages: Int = 0,
+    val failureReason: String? = null,
 )
 
 /**
@@ -41,6 +45,8 @@ suspend fun collectChangedSeries(
     maxPages: Int = 10,
     timeoutMillis: Long = 5_000,
 ): KomgaChangeSet {
+    var pagesFetched = 0
+
     val collected: KomgaChangeSet? = withTimeoutOrNull(timeoutMillis) {
         val changedIds = mutableSetOf<String>()
         var maxSeen: String? = null
@@ -51,15 +57,29 @@ suspend fun collectChangedSeries(
 
         while (page < maxPages) {
             when (val result = fetchPage(page)) {
-                is KomgaPageResult.Failed -> return@withTimeoutOrNull null
+                is KomgaPageResult.Failed -> return@withTimeoutOrNull KomgaChangeSet(
+                    changedIds = emptySet(),
+                    maxSeen = null,
+                    complete = false,
+                    empty = false,
+                    pages = pagesFetched,
+                    failureReason = result.reason,
+                )
 
                 is KomgaPageResult.Ok -> {
+                    pagesFetched++
                     val items = result.page.items
                     if (page == 0) {
                         empty = items.isEmpty()
                         if (empty) {
                             complete = true
-                            return@withTimeoutOrNull KomgaChangeSet(changedIds, null, complete, empty)
+                            return@withTimeoutOrNull KomgaChangeSet(
+                                changedIds = changedIds,
+                                maxSeen = null,
+                                complete = complete,
+                                empty = empty,
+                                pages = pagesFetched,
+                            )
                         }
                     }
 
@@ -87,9 +107,34 @@ suspend fun collectChangedSeries(
             }
         }
 
-        KomgaChangeSet(changedIds, maxSeen, complete, empty)
+        KomgaChangeSet(changedIds, maxSeen, complete, empty, pages = pagesFetched)
     }
 
-    return collected ?: KomgaChangeSet(emptySet(), null, complete = false, empty = false)
+    return collected ?: KomgaChangeSet(
+        changedIds = emptySet(),
+        maxSeen = null,
+        complete = false,
+        empty = false,
+        pages = pagesFetched,
+        failureReason = "timeout after ${timeoutMillis}ms",
+    )
+}
+
+/**
+ * 把一次查询结果换算成服务器结局。
+ *
+ * 时间倒流（Komga 从备份恢复、最新系列被删）按规格 §6.4-7 处理：本次**全部**按「有变化」
+ * （`empty = true` 让 decider 保留该服务器的所有条目），**并且**用本次的 maxSeen 推进水位线，
+ * 否则水位线会永远卡在未来、SKIP 策略下所有 Komga 条目被永久跳过。
+ */
+fun toServerOutcome(changeSet: KomgaChangeSet, watermark: LocalDateTime?): KomgaServerOutcome = when {
+    KomgaWatermarks.isBackwards(changeSet.maxSeen, watermark) ->
+        KomgaServerOutcome.Ok(changedIds = emptySet(), maxSeen = changeSet.maxSeen, empty = true)
+
+    changeSet.complete ->
+        KomgaServerOutcome.Ok(changeSet.changedIds, changeSet.maxSeen, changeSet.empty)
+
+    else ->
+        KomgaServerOutcome.Failed(changeSet.failureReason ?: "incomplete result (page/time limit)")
 }
 // KMK <--

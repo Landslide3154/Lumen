@@ -139,4 +139,33 @@ class KomgaSkipDeciderTest {
 
         decision.newWatermarks shouldBe emptyMap()
     }
+
+    @Test
+    fun `entry whose last update failed is kept next run`() {
+        val decision = decide(
+            entries = listOf(entry(1), entry(2)),
+            outcomes = mapOf("https://h" to ok(changedIds = emptySet())),
+            policy = KomgaUnavailablePolicy.FALLBACK_FULL,
+            retryIds = setOf(1L),
+        )
+
+        decision.keptIds shouldBe setOf(1L)
+        decision.skippedUnchangedIds shouldBe setOf(2L)
+    }
+
+    @Test
+    fun `implausible series id is not matchable`() {
+        isMatchableKomgaSeriesId("4f7b1c2e-1111-2222-3333-444455556666") shouldBe true
+        isMatchableKomgaSeriesId("A%2FB") shouldBe false
+        isMatchableKomgaSeriesId("has space") shouldBe false
+        isMatchableKomgaSeriesId("") shouldBe false
+        isMatchableKomgaSeriesId("x".repeat(100)) shouldBe false
+    }
+
+    @Test
+    fun `retry ids parse and encode`() {
+        parseRetryIds("12, 34,,x") shouldBe setOf(12L, 34L)
+        parseRetryIds("") shouldBe emptySet()
+        encodeRetryIds(setOf(2L, 1L)) shouldBe "1,2"
+    }
 }
