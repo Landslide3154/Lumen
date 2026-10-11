@@ -76,6 +76,28 @@ class LibraryPreferences(
     // KMK -->
     fun fetchMetadataOnAdd() = preferenceStore.getBoolean("fetch_metadata_on_add", false)
     fun fetchChaptersOnAdd() = preferenceStore.getBoolean("fetch_chapters_on_add", false)
+
+    fun incrementalUpdateMode() = preferenceStore.getEnum(
+        "pref_library_update_mode",
+        LibraryUpdateMode.INCREMENTAL,
+    )
+
+    fun komgaUnavailablePolicy() = preferenceStore.getEnum(
+        "pref_komga_unavailable_policy",
+        KomgaUnavailablePolicy.FALLBACK_FULL,
+    )
+
+    /** 每个 Komga 地址的水位线，JSON 编码，见 KomgaWatermarks。 */
+    fun komgaWatermarks() = preferenceStore.getString(
+        Preference.appStateKey("library_update_komga_watermarks"),
+        "",
+    )
+
+    /** 上一次「整库 + 增量」更新跳过了多少条，供更新页显示。 */
+    fun komgaSkippedCount() = preferenceStore.getInt(
+        Preference.appStateKey("library_update_komga_skipped_count"),
+        0,
+    )
     // KMK <--
 
     fun showContinueReadingButton() = preferenceStore.getBoolean(
