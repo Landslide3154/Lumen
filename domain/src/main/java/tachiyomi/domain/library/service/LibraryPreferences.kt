@@ -260,6 +260,18 @@ class LibraryPreferences(
         Disabled,
     }
 
+    // KMK -->
+    enum class LibraryUpdateMode {
+        INCREMENTAL,
+        FULL,
+    }
+
+    enum class KomgaUnavailablePolicy {
+        FALLBACK_FULL,
+        SKIP,
+    }
+    // KMK <--
+
     // SY -->
 
     fun sortTagsForLibrary() = preferenceStore.getStringSet("sort_tags_for_library", mutableSetOf())
