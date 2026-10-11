@@ -1,0 +1,110 @@
+name: Build APK (Lumen)
+
+# fork 自己的构建工作流：不动上游的 build_push / build_release / build_dispatch_preview。
+# 触发：手动按钮 + 推送到任意分支 + 推 lumen-v* 标签（标签会额外建 Release 附 APK）。
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'lumen-v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build preview APK
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # versionName 用 `git rev-list --count HEAD`，浅克隆会得到错误版本号
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          java-version-file: .github/.java-version
+          distribution: temurin
+
+      - name: Set up gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+
+      # 上游靠 secrets 提供这两个文件；本 fork 没有 secrets。
+      # 注意：不带 -Pinclude-telemetry 时其实用不到它们（插件是有条件 apply），
+      # 写上是为了以后打开遥测不至于突然编译失败。client 必须覆盖本次 variant 的包名。
+      - name: Write placeholder secrets
+        run: |
+          cat > app/google-services.json <<'JSON'
+          {
+            "project_info": {
+              "project_number": "0",
+              "project_id": "lumen-placeholder",
+              "storage_bucket": "lumen-placeholder.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:0:android:0",
+                  "android_client_info": { "package_name": "app.lumen" }
+                },
+                "api_key": [ { "current_key": "placeholder" } ]
+              },
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:0:android:1",
+                  "android_client_info": { "package_name": "app.lumen.beta" }
+                },
+                "api_key": [ { "current_key": "placeholder" } ]
+              },
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:0:android:2",
+                  "android_client_info": { "package_name": "app.lumen.dev" }
+                },
+                "api_key": [ { "current_key": "placeholder" } ]
+              }
+            ],
+            "configuration_version": "1"
+          }
+          JSON
+          mkdir -p app/src/main/assets
+          echo '{}' > app/src/main/assets/client_secrets.json
+
+      - name: Check code format
+        run: ./gradlew spotlessCheck
+
+      - name: Build app
+        run: ./gradlew assemblePreview
+
+      - name: Run unit tests
+        id: unit_tests
+        run: ./gradlew testReleaseUnitTest
+
+      - name: Upload test report
+        if: steps.unit_tests.outcome == 'failure'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-report-${{ github.sha }}
+          path: app/build/reports/tests/testReleaseUnitTest
+
+      - name: Upload APK
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lumen-preview-apk
+          path: app/build/outputs/apk/preview/*.apk
+
+      - name: Attach APK to release
+        if: startsWith(github.ref, 'refs/tags/lumen-v')
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          files: app/build/outputs/apk/preview/*.apk
+          generate_release_notes: true
