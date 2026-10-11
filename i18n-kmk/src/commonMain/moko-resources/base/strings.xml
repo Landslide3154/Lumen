@@ -238,4 +238,8 @@
     <string name="pref_discord_show_download_button_summary">Displays a button to download the app</string>
     <string name="pref_discord_show_discord_button">Show Discord Button</string>
     <string name="pref_discord_show_discord_button_summary">Displays a button to join the Discord server</string>
+
+    <!-- Lumen 增量更新 -->
+    <string name="skipped_reason_komga_unchanged">No changes on Komga</string>
+    <string name="skipped_reason_komga_unavailable">Komga unavailable</string>
 </resources>

@@ -25,10 +25,13 @@ import eu.kanade.domain.track.model.toDbTrack
 import eu.kanade.domain.track.model.toDomainTrack
 import eu.kanade.tachiyomi.data.LibraryUpdateStatus
 import eu.kanade.tachiyomi.data.download.DownloadManager
+import eu.kanade.tachiyomi.data.library.komga.KomgaIncrementalFilter
+import eu.kanade.tachiyomi.data.library.komga.KomgaWatermarks
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.data.sync.SyncDataJob
 import eu.kanade.tachiyomi.data.track.TrackStatus
 import eu.kanade.tachiyomi.data.track.TrackerManager
+import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.util.system.isConnectedToWifi
@@ -52,9 +55,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.serialization.json.Json
 import logcat.LogPriority
 import mihon.domain.chapter.interactor.FilterChaptersForDownload
 import mihon.domain.source.interactor.UpdateMangaFromRemote
+import okhttp3.Dns
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.core.common.util.lang.withIOContext
@@ -73,6 +78,7 @@ import tachiyomi.domain.library.service.LibraryPreferences.Companion.MANGA_HAS_U
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.MANGA_NON_COMPLETED
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.MANGA_NON_READ
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.MANGA_OUTSIDE_RELEASE_PERIOD
+import tachiyomi.domain.library.service.LibraryPreferences.LibraryUpdateMode
 import tachiyomi.domain.libraryUpdateError.interactor.DeleteLibraryUpdateErrors
 import tachiyomi.domain.libraryUpdateError.interactor.InsertLibraryUpdateErrors
 import tachiyomi.domain.libraryUpdateError.model.LibraryUpdateError
@@ -136,6 +142,21 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private val insertLibraryUpdateErrorMessages: InsertLibraryUpdateErrorMessages = Injekt.get()
     // KMK <--
 
+    // KMK -->
+    private var pendingKomgaWatermarks: Map<String, String> = emptyMap()
+    private var pendingKomgaSkippedCount = 0
+    private var komgaRanIncremental = false
+
+    private val komgaFilter by lazy {
+        KomgaIncrementalFilter(
+            context = context,
+            client = Injekt.get<NetworkHelper>().client.newBuilder().dns(Dns.SYSTEM).build(),
+            json = Injekt.get(),
+            libraryPreferences = libraryPreferences,
+        )
+    }
+    // KMK <--
+
     private var mangaToUpdate: List<LibraryManga> = mutableListOf()
 
     override suspend fun doWork(): Result {
@@ -179,7 +200,12 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         return withIOContext {
             try {
                 when (target) {
-                    Target.CHAPTERS -> updateChapterList()
+                    // KMK -->
+                    Target.CHAPTERS -> {
+                        updateChapterList()
+                        commitKomgaIncrementalState()
+                    }
+                    // KMK <--
                     // SY -->
                     Target.SYNC_FOLLOWS -> syncFollows()
                     Target.PUSH_FAVORITES -> pushFavorites()
@@ -215,6 +241,27 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             },
         )
     }
+
+    // KMK -->
+    /** 只有覆盖整库的更新才做增量过滤，也才允许推进水位线。 */
+    private fun isFullLibraryUpdate(categoryId: Long, group: Int): Boolean {
+        if (categoryId != -1L) return false
+        if (inputData.getLongArray(KEY_MANGA_IDS) != null) return false
+        val groupUpdateType = libraryPreferences.groupLibraryUpdateType().get()
+        return group == LibraryGroup.BY_DEFAULT ||
+            groupUpdateType == GroupLibraryMode.GLOBAL ||
+            (groupUpdateType == GroupLibraryMode.ALL_BUT_UNGROUPED && group == LibraryGroup.UNGROUPED)
+    }
+
+    /** 整库更新成功结束后才推进水位线与跳过计数（局部更新、失败、取消都不推进）。 */
+    private fun commitKomgaIncrementalState() {
+        if (!komgaRanIncremental) return
+        if (pendingKomgaWatermarks.isNotEmpty()) {
+            libraryPreferences.komgaWatermarks().set(KomgaWatermarks.encode(pendingKomgaWatermarks))
+        }
+        libraryPreferences.komgaSkippedCount().set(pendingKomgaSkippedCount)
+    }
+    // KMK <--
 
     /**
      * Adds list of manga to be updated.
@@ -307,7 +354,9 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         val skippedUpdates = mutableListOf<Pair<Manga, String?>>()
         val (_, fetchWindowUpperBound) = fetchInterval.getWindow(ZonedDateTime.now())
 
-        mangaToUpdate = listToUpdate
+        // KMK -->
+        var filtered = listToUpdate
+            // KMK <--
             // SY -->
             .distinctBy { it.manga.id }
             // SY <--
@@ -347,6 +396,26 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                     else -> true
                 }
             }
+
+        // KMK -->
+        if (
+            isFullLibraryUpdate(categoryId, group) &&
+            libraryPreferences.incrementalUpdateMode().get() == LibraryUpdateMode.INCREMENTAL
+        ) {
+            val outcome = komgaFilter.apply(
+                candidates = filtered,
+                watermarksRaw = libraryPreferences.komgaWatermarks().get(),
+                policy = libraryPreferences.komgaUnavailablePolicy().get(),
+            )
+            filtered = outcome.kept
+            skippedUpdates += outcome.skipped
+            pendingKomgaWatermarks = outcome.newWatermarks
+            pendingKomgaSkippedCount = outcome.skipped.size
+            komgaRanIncremental = outcome.ranIncremental
+        }
+
+        mangaToUpdate = filtered
+            // KMK <--
             .sortedWith(
                 compareByDescending<LibraryManga> {
                     // Prefer manga updating today
