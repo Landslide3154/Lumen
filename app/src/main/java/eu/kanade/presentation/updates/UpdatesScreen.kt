@@ -50,6 +50,9 @@ fun UpdateScreen(
     state: UpdatesScreenModel.State,
     snackbarHostState: SnackbarHostState,
     lastUpdated: Long,
+    // KMK -->
+    komgaSkippedCount: Int,
+    // KMK <--
     // SY -->
     preserveReadingPosition: Boolean,
     // SY <--
@@ -136,7 +139,7 @@ fun UpdateScreen(
                     FastScrollLazyColumn(
                         contentPadding = contentPadding,
                     ) {
-                        updatesLastUpdatedItem(lastUpdated)
+                        updatesLastUpdatedItem(lastUpdated, komgaSkippedCount)
 
                         updatesUiItems(
                             // KMK -->

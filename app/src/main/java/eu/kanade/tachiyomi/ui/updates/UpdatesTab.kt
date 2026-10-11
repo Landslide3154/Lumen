@@ -88,6 +88,9 @@ data object UpdatesTab : Tab {
             state = state,
             snackbarHostState = screenModel.snackbarHostState,
             lastUpdated = screenModel.lastUpdated,
+            // KMK -->
+            komgaSkippedCount = screenModel.komgaSkippedCount,
+            // KMK <--
             // SY -->
             preserveReadingPosition = screenModel.preserveReadingPosition,
             // SY <--

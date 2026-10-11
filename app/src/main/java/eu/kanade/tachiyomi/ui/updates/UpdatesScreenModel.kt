@@ -80,6 +80,10 @@ class UpdatesScreenModel(
 
     val lastUpdated by libraryPreferences.lastUpdatedTimestamp().asState(screenModelScope)
 
+    // KMK -->
+    val komgaSkippedCount by libraryPreferences.komgaSkippedCount().asState(screenModelScope)
+    // KMK <--
+
     // SY -->
     val preserveReadingPosition by readerPreferences.preserveReadingPosition().asState(screenModelScope)
     // SY <--

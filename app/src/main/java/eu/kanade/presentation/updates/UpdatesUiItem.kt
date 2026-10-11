@@ -66,6 +66,7 @@ import mihon.feature.upcoming.DateHeading
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.updates.model.UpdatesWithRelations
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
@@ -73,6 +74,9 @@ import tachiyomi.presentation.core.util.selectedBackground
 
 internal fun LazyListScope.updatesLastUpdatedItem(
     lastUpdated: Long,
+    // KMK -->
+    komgaSkippedCount: Int = 0,
+    // KMK <--
 ) {
     item(key = "updates-lastUpdated") {
         Box(
@@ -86,6 +90,23 @@ internal fun LazyListScope.updatesLastUpdatedItem(
             )
         }
     }
+
+    // KMK -->
+    if (komgaSkippedCount > 0) {
+        item(key = "updates-komga-skipped") {
+            Box(
+                modifier = Modifier
+                    .animateItemFastScroll()
+                    .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
+            ) {
+                Text(
+                    text = stringResource(KMR.strings.updates_skipped_komga_info, komgaSkippedCount),
+                    fontStyle = FontStyle.Italic,
+                )
+            }
+        }
+    }
+    // KMK <--
 }
 
 internal fun LazyListScope.updatesUiItems(
