@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Komikku</string>
+    <!-- KMK --> 应用显示名改为 Lumen（translatable=false，所有语言一致）
+    <string name="app_name" translatable="false">Lumen</string>
+    <!-- /KMK -->
 
     <!-- Generic strings -->
     <string name="on">On</string>

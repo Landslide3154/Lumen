@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-        <color name="splash">#1A0A0A</color>
+        <!-- KMK --> 闪屏底色改为 Lumen 墨色（原 #1A0A0A）
+        <color name="splash">#0B1622</color>
+        <!-- /KMK -->
 
     <!-- Default Theme -->
     <color name="divider_default">@color/md_white_1000_12</color>

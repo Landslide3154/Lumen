@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- KMK --> 闪屏改用 Lumen 标识（夜间）
     <item
         android:width="72dp"
         android:height="72dp"
-        android:drawable="@drawable/ic_komikku"
+        android:drawable="@drawable/ic_lumen_splash_night"
         android:gravity="center" />
+    <!-- /KMK -->
 </layer-list>

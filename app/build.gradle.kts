@@ -26,7 +26,9 @@ android {
     namespace = "eu.kanade.tachiyomi"
 
     defaultConfig {
-        applicationId = "app.komikku"
+        // KMK -->
+        applicationId = "app.lumen"
+        // KMK <--
 
         versionCode = 82
         versionName = "1.14.1"

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher">#c837ab</color>
+    <!-- KMK --> 通知强调色：深墨（原 preview 紫 #c837ab）
+    <color name="ic_launcher">#0B1622</color>
+    <!-- /KMK -->
 </resources>

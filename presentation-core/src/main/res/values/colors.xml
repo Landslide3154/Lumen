@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="splash">#FBEDED</color>
+    <!-- KMK --> 闪屏底色改为 Lumen 米白（原 #FBEDED）
+    <color name="splash">#F7F3EC</color>
+    <!-- /KMK -->
 
     <color name="cover_placeholder">#4F888888</color>
 
