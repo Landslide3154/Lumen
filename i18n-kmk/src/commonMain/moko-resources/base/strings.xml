@@ -242,4 +242,12 @@
     <!-- Lumen 增量更新 -->
     <string name="skipped_reason_komga_unchanged">No changes on Komga</string>
     <string name="skipped_reason_komga_unavailable">Komga unavailable</string>
+    <string name="pref_library_update_mode">Update mode</string>
+    <string name="pref_library_update_mode_incremental">Incremental</string>
+    <string name="pref_library_update_mode_full">Full</string>
+    <string name="pref_komga_unavailable_policy">When Komga is unavailable</string>
+    <string name="pref_komga_unavailable_fallback">Fall back to full update</string>
+    <string name="pref_komga_unavailable_skip">Skip Komga entries</string>
+    <string name="pref_library_update_incremental_note">Incremental updates only fetch entries that changed on Komga. Auto-refreshing manga details is not affected; if your Komga library sits on a network share, adding books may not be detected — switch to Full once.</string>
+    <string name="updates_skipped_komga_info">Skipped %1$d entries (no changes on Komga)</string>
 </resources>

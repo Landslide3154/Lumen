@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Lumen 新增字符串的中文覆盖。
+  英文原文在 i18n-kmk 的 base（规范来源）；这里只覆盖 app 模块，避免手改
+  i18n* 模块的非 base 语言文件（那些由 Weblate 拥有）。
+  资源名必须与 KMR 的 key 完全一致。
+-->
+<resources>
+    <string name="skipped_reason_komga_unchanged">Komga 上无变化</string>
+    <string name="skipped_reason_komga_unavailable">Komga 暂时不可用</string>
+    <string name="pref_library_update_mode">更新方式</string>
+    <string name="pref_library_update_mode_incremental">增量</string>
+    <string name="pref_library_update_mode_full">全量</string>
+    <string name="pref_komga_unavailable_policy">Komga 不可用时</string>
+    <string name="pref_komga_unavailable_fallback">回退全量更新</string>
+    <string name="pref_komga_unavailable_skip">跳过 Komga 条目</string>
+    <string name="pref_library_update_incremental_note">增量更新只拉取 Komga 上有变化的作品。开启「自动刷新作品信息」时，作品信息的请求不受本功能影响；若 Komga 库放在网络盘上、加书后未被识别为变化，可临时切到「全量」更新一次。</string>
+    <string name="updates_skipped_komga_info">本次跳过 %1$d 部（Komga 上无变化）</string>
+</resources>

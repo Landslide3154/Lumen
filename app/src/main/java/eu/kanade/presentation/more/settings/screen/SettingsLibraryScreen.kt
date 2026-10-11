@@ -224,6 +224,31 @@ object SettingsLibraryScreen : SearchableSettings {
                     ),
                     title = stringResource(MR.strings.pref_library_update_smart_update),
                 ),
+                // KMK -->
+                Preference.PreferenceItem.ListPreference(
+                    preference = libraryPreferences.incrementalUpdateMode(),
+                    entries = persistentMapOf(
+                        LibraryPreferences.LibraryUpdateMode.INCREMENTAL to
+                            stringResource(KMR.strings.pref_library_update_mode_incremental),
+                        LibraryPreferences.LibraryUpdateMode.FULL to
+                            stringResource(KMR.strings.pref_library_update_mode_full),
+                    ),
+                    title = stringResource(KMR.strings.pref_library_update_mode),
+                ),
+                Preference.PreferenceItem.ListPreference(
+                    preference = libraryPreferences.komgaUnavailablePolicy(),
+                    entries = persistentMapOf(
+                        LibraryPreferences.KomgaUnavailablePolicy.FALLBACK_FULL to
+                            stringResource(KMR.strings.pref_komga_unavailable_fallback),
+                        LibraryPreferences.KomgaUnavailablePolicy.SKIP to
+                            stringResource(KMR.strings.pref_komga_unavailable_skip),
+                    ),
+                    title = stringResource(KMR.strings.pref_komga_unavailable_policy),
+                ),
+                Preference.PreferenceItem.InfoPreference(
+                    title = stringResource(KMR.strings.pref_library_update_incremental_note),
+                ),
+                // KMK <--
                 Preference.PreferenceItem.SwitchPreference(
                     preference = libraryPreferences.newShowUpdatesCount(),
                     title = stringResource(MR.strings.pref_library_update_show_tab_badge),
