@@ -251,7 +251,7 @@ fun parseKomgaSeriesUrl(url: String): KomgaSeriesRef?
 1. **英文（规范来源）**：加到 `i18n-kmk/src/commonMain/moko-resources/base/strings.xml`，用 `KMR` 引用。名字必须全局唯一（当前 i18n / i18n-kmk / i18n-sy 三个 base 文件 0 重名；跨模块重名会导致资源被静默覆盖，属未定义行为）。
 2. **中文覆盖**：`app/src/main/res/values-zh-rCN/strings.xml`（新建）。依据：moko 生成的资源名就是 key 本身、不带前缀，AGP 资源合并中 app 模块优先级高于库模块，所以同名的中文值会覆盖库里的英文值。
 3. **理由**：仓库硬规则禁止手改 `i18n*` 的非 base 语言文件（Weblate 拥有），所以中文不写进 i18n-kmk 的 zh-rCN。
-4. 新增字符串清单（9 条）：
+4. 新增字符串清单（10 条）：
 
 | key | 英文（base） | 中文（zh-rCN 覆盖） |
 | --- | --- | --- |
