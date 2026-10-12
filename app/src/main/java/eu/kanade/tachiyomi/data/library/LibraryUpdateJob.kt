@@ -261,7 +261,10 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             (groupUpdateType == GroupLibraryMode.ALL_BUT_UNGROUPED && group == LibraryGroup.UNGROUPED)
     }
 
-    /** 整库更新成功结束后才推进水位线与跳过计数（局部更新、失败、取消都不推进）。 */
+    /**
+     * 更新成功结束后落盘：跳过计数/诊断信息每次都写（局部更新也写，便于观察）；
+     * 水位线只在整库更新时推进（局部更新提前推进会导致范围外的变化被漏掉）。
+     */
     private fun commitKomgaIncrementalState() {
         if (!komgaRanIncremental) return
         if (pendingKomgaWatermarks.isNotEmpty()) {
@@ -414,10 +417,10 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             }
 
         // KMK -->
-        if (
-            isFullLibraryUpdate(categoryId, group) &&
-            libraryPreferences.incrementalUpdateMode().get() == LibraryUpdateMode.INCREMENTAL
-        ) {
+        // 增量过滤对「整库」和「分类/分组更新」都生效（书架页下拉刷新的就是当前分类）；
+        // 单本定向更新在前面就 return 了，永远不会被跳过。
+        if (libraryPreferences.incrementalUpdateMode().get() == LibraryUpdateMode.INCREMENTAL) {
+            val fullLibrary = isFullLibraryUpdate(categoryId, group)
             val outcome = komgaFilter.apply(
                 candidates = filtered,
                 watermarksRaw = libraryPreferences.komgaWatermarks().get(),
@@ -426,7 +429,9 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             )
             filtered = outcome.kept
             skippedUpdates += outcome.skipped
-            pendingKomgaWatermarks = outcome.newWatermarks
+            // 只有整库更新才能推进水位线：局部更新时 Komga 上「本次范围之外」的变化还没被处理，
+            // 提前推进会让它们下次不再被算作有变化（漏更新）。
+            pendingKomgaWatermarks = if (fullLibrary) outcome.newWatermarks else emptyMap()
             pendingKomgaSkippedCount = outcome.skipped.size
             pendingKomgaChangedCount = outcome.changedCount
             pendingKomgaFallbackReason = outcome.fallbackReason
