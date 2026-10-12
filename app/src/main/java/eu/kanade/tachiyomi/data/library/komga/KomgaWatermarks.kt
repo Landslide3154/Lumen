@@ -23,11 +23,16 @@ object KomgaWatermarks {
         }
     }
 
-    /** 任一侧无法解析时返回 true（宁可多拉，不可漏）。 */
+    /**
+     * 水位线代表「这个时间点及之前的都已经处理过」，所以只有**严格更新**才算有变化。
+     *
+     * 用 `>=` 会让时间最新的那一部永远满足条件、每次更新都被重新同步（用户实际遇到的现象）。
+     * 任一侧无法解析时返回 true（宁可多拉，不可漏）。
+     */
     fun isChanged(lastModified: String?, watermark: LocalDateTime?): Boolean {
         if (watermark == null) return true
         val value = parseLastModified(lastModified) ?: return true
-        return !value.isBefore(watermark)
+        return value.isAfter(watermark)
     }
 
     /** Komga 上的时间倒流（例如从备份恢复）时返回 true。 */

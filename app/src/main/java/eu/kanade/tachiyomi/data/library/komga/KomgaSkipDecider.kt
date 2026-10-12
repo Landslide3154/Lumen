@@ -19,6 +19,8 @@ sealed interface KomgaServerOutcome {
 
 data class KomgaDecision(
     val keptIds: Set<Long>,
+    /** 因为 Komga 报告「有变化」而保留的条目（更新页用来说明本次查到几部有变化）。 */
+    val changedMangaIds: Set<Long>,
     val skippedUnchangedIds: Set<Long>,
     val skippedUnavailableIds: Set<Long>,
     /** 仅来自成功且拿到 maxSeen 的服务器。 */
@@ -38,6 +40,7 @@ fun decide(
     retryIds: Set<Long> = emptySet(),
 ): KomgaDecision {
     val keptIds = mutableSetOf<Long>()
+    val changedMangaIds = mutableSetOf<Long>()
     val skippedUnchangedIds = mutableSetOf<Long>()
     val skippedUnavailableIds = mutableSetOf<Long>()
 
@@ -69,6 +72,9 @@ fun decide(
             is KomgaServerOutcome.Ok -> {
                 if (outcome.empty || seriesId in outcome.changedIds) {
                     keptIds += entry.mangaId
+                    if (!outcome.empty && seriesId in outcome.changedIds) {
+                        changedMangaIds += entry.mangaId
+                    }
                 } else {
                     skippedUnchangedIds += entry.mangaId
                 }
@@ -83,6 +89,7 @@ fun decide(
 
     return KomgaDecision(
         keptIds = keptIds,
+        changedMangaIds = changedMangaIds,
         skippedUnchangedIds = skippedUnchangedIds,
         skippedUnavailableIds = skippedUnavailableIds,
         newWatermarks = newWatermarks,

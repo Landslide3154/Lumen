@@ -1,4 +1,4 @@
-﻿import mihon.buildlogic.Config
+import mihon.buildlogic.Config
 import mihon.buildlogic.getBuildTime
 import mihon.buildlogic.getCommitCount
 import mihon.buildlogic.getGitSha
@@ -23,8 +23,8 @@ if (Config.includeTelemetry) {
 shortcutHelper.setFilePath("./shortcuts.xml")
 
 // KMK -->
-/** Lumen 鑷湁鐗堟湰搴忓彿锛氭瘡娆′氦浠?+1锛岀増鏈彿鏄剧ず涓?涓婃父鐗堟湰.01 / .02 鈥?*/
-val lumenRevision = 3
+/** Lumen 自有版本序号：每次交付 +1，版本号显示为 上游版本.01 / .02 … */
+val lumenRevision = 4
 val lumenVersionName = "1.14.1." + lumenRevision.toString().padStart(2, '0')
 // KMK <--
 
@@ -88,7 +88,7 @@ android {
 
             applicationIdSuffix = ".beta"
 
-            // KMK --> 浜や粯鐗堜笉杩藉姞鎻愪氦鍙凤紝鐗堟湰鍙峰氨鏄?1.14.1.01 杩欐牱
+            // KMK --> 交付版不追加提交号，版本号就是 1.14.1.01 这样
             versionNameSuffix = ""
             // KMK <--
             signingConfig = debug.signingConfig
@@ -118,7 +118,7 @@ android {
 
     splits {
         abi {
-            // KMK --> 鍙嚭 arm64-v8a 涓€涓寘
+            // KMK --> 只出 arm64-v8a 一个包
             isEnable = true
             isUniversalApk = false
             reset()
@@ -367,13 +367,22 @@ buildscript {
 }
 
 // KMK -->
-// APK 鏂囦欢鍚嶅甫涓婅蒋浠跺悕涓庣増鏈彿锛歀umen-1.14.1.01.apk
-// 锛圓GP 8 鐨?VariantOutput 娌℃湁鍏紑鐨?outputFileName 鍐欏叆鍙ｏ紝鏋勫缓瀹屾敼鍚嶏級
+// APK 文件名带上软件名、ABI 与版本号，例如 Lumen-arm64-v8a-1.14.1.04.apk
+// （AGP 8 的 VariantOutput 没有公开的 outputFileName 写入口，构建完统一改名）
 tasks.matching { it.name.startsWith("assemble") }.configureEach {
     doLast {
-        val variantDir = file("build/outputs/apk/${name.removePrefix("assemble").lowercase()}")
+        val variant = name.removePrefix("assemble").lowercase()
+        val variantDir = file("build/outputs/apk/$variant")
         variantDir.listFiles { f: File -> f.isFile && f.extension == "apk" && !f.name.startsWith("Lumen-") }
-            ?.forEach { it.renameTo(File(variantDir, "Lumen-$lumenVersionName.apk")) }
+            ?.forEach { apk ->
+                // 原文件名形如 app-arm64-v8a-preview.apk，取出中间那段 ABI
+                val abi = apk.nameWithoutExtension
+                    .removePrefix("app-")
+                    .removeSuffix("-$variant")
+                    .takeIf { it.isNotEmpty() && it != "universal" }
+                val suffix = abi?.let { "-$it" }.orEmpty()
+                apk.renameTo(File(variantDir, "Lumen$suffix-$lumenVersionName.apk"))
+            }
     }
 }
 // KMK <--

@@ -147,6 +147,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     // KMK -->
     private var pendingKomgaWatermarks: Map<String, String> = emptyMap()
     private var pendingKomgaSkippedCount = 0
+    private var pendingKomgaChangedCount = 0
     private var pendingKomgaFailedIds: Set<Long> = emptySet()
     private var komgaRanIncremental = false
 
@@ -268,6 +269,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             libraryPreferences.komgaWatermarks().set(KomgaWatermarks.encode(merged))
         }
         libraryPreferences.komgaSkippedCount().set(pendingKomgaSkippedCount)
+        libraryPreferences.komgaChangedCount().set(pendingKomgaChangedCount)
         // 本次失败的 Komga 条目下次强制重试一次，避免一次瞬时失败 = 此后永不再自动更新
         libraryPreferences.komgaRetryIds().set(encodeRetryIds(pendingKomgaFailedIds))
     }
@@ -422,6 +424,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             skippedUpdates += outcome.skipped
             pendingKomgaWatermarks = outcome.newWatermarks
             pendingKomgaSkippedCount = outcome.skipped.size
+            pendingKomgaChangedCount = outcome.changedCount
             komgaRanIncremental = outcome.ranIncremental
         }
 

@@ -27,8 +27,10 @@ class KomgaWatermarkTest {
     }
 
     @Test
-    fun `changed when equal greater or watermark missing`() {
-        KomgaWatermarks.isChanged("2026-10-12T02:00:00Z", watermark) shouldBe true
+    fun `changed only when strictly newer than watermark`() {
+        // 等于水位线 = 上次已经处理过的那一批，不能再算「有变化」，
+        // 否则时间最新的那部会在每次更新时被反复同步。
+        KomgaWatermarks.isChanged("2026-10-12T02:00:00Z", watermark) shouldBe false
         KomgaWatermarks.isChanged("2026-10-12T03:00:00Z", watermark) shouldBe true
         KomgaWatermarks.isChanged("2026-10-12T01:00:00Z", watermark) shouldBe false
         KomgaWatermarks.isChanged("2026-10-12T01:00:00Z", null) shouldBe true

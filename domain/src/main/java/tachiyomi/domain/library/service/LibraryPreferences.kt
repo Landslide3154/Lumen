@@ -99,6 +99,12 @@ class LibraryPreferences(
         0,
     )
 
+    /** 上一次「整库 + 增量」更新里 Komga 报告有变化的条目数，供更新页显示。 */
+    fun komgaChangedCount() = preferenceStore.getInt(
+        Preference.appStateKey("library_update_komga_changed_count"),
+        0,
+    )
+
     /** 上一次更新失败的 Komga 条目 id（逗号分隔），下次强制重试一次。 */
     fun komgaRetryIds() = preferenceStore.getString(
         Preference.appStateKey("library_update_komga_retry_ids"),

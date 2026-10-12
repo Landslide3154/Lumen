@@ -52,6 +52,7 @@ fun UpdateScreen(
     lastUpdated: Long,
     // KMK -->
     komgaSkippedCount: Int,
+    komgaChangedCount: Int = 0,
     // KMK <--
     // SY -->
     preserveReadingPosition: Boolean,
@@ -139,7 +140,7 @@ fun UpdateScreen(
                     FastScrollLazyColumn(
                         contentPadding = contentPadding,
                     ) {
-                        updatesLastUpdatedItem(lastUpdated, komgaSkippedCount)
+                        updatesLastUpdatedItem(lastUpdated, komgaSkippedCount, komgaChangedCount)
 
                         updatesUiItems(
                             // KMK -->

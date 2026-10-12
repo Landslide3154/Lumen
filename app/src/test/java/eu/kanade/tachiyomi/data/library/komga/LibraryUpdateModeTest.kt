@@ -52,6 +52,7 @@ class LibraryUpdateModeTest {
     fun `watermarks and skip count are app state keys`() {
         preferences.komgaWatermarks().key() shouldBe "__APP_STATE_library_update_komga_watermarks"
         preferences.komgaSkippedCount().key() shouldBe "__APP_STATE_library_update_komga_skipped_count"
+        preferences.komgaChangedCount().key() shouldBe "__APP_STATE_library_update_komga_changed_count"
         preferences.komgaRetryIds().key() shouldBe "__APP_STATE_library_update_komga_retry_ids"
     }
 

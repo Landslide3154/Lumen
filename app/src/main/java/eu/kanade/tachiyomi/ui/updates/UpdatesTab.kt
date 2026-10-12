@@ -90,6 +90,7 @@ data object UpdatesTab : Tab {
             lastUpdated = screenModel.lastUpdated,
             // KMK -->
             komgaSkippedCount = screenModel.komgaSkippedCount,
+            komgaChangedCount = screenModel.komgaChangedCount,
             // KMK <--
             // SY -->
             preserveReadingPosition = screenModel.preserveReadingPosition,

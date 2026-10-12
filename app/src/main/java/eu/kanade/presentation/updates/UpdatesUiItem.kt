@@ -76,6 +76,7 @@ internal fun LazyListScope.updatesLastUpdatedItem(
     lastUpdated: Long,
     // KMK -->
     komgaSkippedCount: Int = 0,
+    komgaChangedCount: Int = 0,
     // KMK <--
 ) {
     item(key = "updates-lastUpdated") {
@@ -100,7 +101,11 @@ internal fun LazyListScope.updatesLastUpdatedItem(
                     .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
             ) {
                 Text(
-                    text = stringResource(KMR.strings.updates_skipped_komga_info, komgaSkippedCount),
+                    text = stringResource(
+                        KMR.strings.updates_skipped_komga_info,
+                        komgaChangedCount,
+                        komgaSkippedCount,
+                    ),
                     fontStyle = FontStyle.Italic,
                 )
             }

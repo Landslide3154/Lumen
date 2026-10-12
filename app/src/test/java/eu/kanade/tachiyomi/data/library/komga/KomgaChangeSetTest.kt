@@ -17,7 +17,7 @@ class KomgaChangeSetTest {
     private fun wm(time: String) = LocalDateTime.parse("2026-10-12T$time:00")
 
     @Test
-    fun `collects items at or after watermark and stops at older one`() = runTest {
+    fun `collects items newer than watermark and stops at the watermark itself`() = runTest {
         val pages = listOf(
             KomgaPage(listOf(item("A", "03:00"), item("B", "02:00")), isLast = false),
             KomgaPage(listOf(item("C", "01:00"), item("D", "00:00")), isLast = false),
@@ -33,13 +33,33 @@ class KomgaChangeSetTest {
             },
         )
 
-        result.changedIds shouldBe setOf("A", "B")
-        requested shouldBe listOf(0, 1)
+        result.changedIds shouldBe setOf("A")
+        requested shouldBe listOf(0)
         result.complete shouldBe true
-        result.pages shouldBe 2
+        result.pages shouldBe 1
         result.failureReason shouldBe null
         result.maxSeen shouldBe "2026-10-12T03:00:00Z"
         result.empty shouldBe false
+    }
+
+    @Test
+    fun `newest series is not collected again on the next run`() = runTest {
+        val page = KomgaPage(listOf(item("A", "03:00"), item("B", "02:00")), isLast = true)
+        val fetch: suspend (Int) -> KomgaPageResult = { KomgaPageResult.Ok(page) }
+
+        val first = collectChangedSeries(watermark = null, fetchPage = fetch)
+        first.changedIds shouldBe setOf("A", "B")
+
+        // 拿上次看到的最大时间当水位线：这一次不该再收集到任何东西，
+        // 否则「时间最新的那一部」会在每次更新时被反复同步（用户实际遇到的现象）。
+        val second = collectChangedSeries(
+            watermark = KomgaWatermarks.parseLastModified(first.maxSeen),
+            fetchPage = fetch,
+        )
+
+        second.changedIds shouldBe emptySet()
+        second.complete shouldBe true
+        second.maxSeen shouldBe "2026-10-12T03:00:00Z"
     }
 
     @Test

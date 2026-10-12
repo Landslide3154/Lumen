@@ -29,6 +29,8 @@ class KomgaIncrementalFilter(
         val skipped: List<Pair<Manga, String>>,
         val newWatermarks: Map<String, String>,
         val ranIncremental: Boolean,
+        /** Komga 明确报告「有变化」的条目数（更新页显示用）。 */
+        val changedCount: Int = 0,
     )
 
     suspend fun apply(
@@ -131,6 +133,7 @@ class KomgaIncrementalFilter(
             skipped = skipped,
             newWatermarks = decision.newWatermarks,
             ranIncremental = true,
+            changedCount = decision.changedMangaIds.size,
         )
     }
 }

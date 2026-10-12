@@ -23,6 +23,20 @@ class KomgaSkipDeciderTest {
     ) = KomgaServerOutcome.Ok(changedIds, maxSeen, empty)
 
     @Test
+    fun `changed count only counts entries Komga reported as changed`() {
+        val decision = decide(
+            entries = listOf(entry(1), entry(2), entry(3)),
+            outcomes = mapOf("https://h" to ok(changedIds = setOf("S1"))),
+            policy = KomgaUnavailablePolicy.FALLBACK_FULL,
+            retryIds = setOf(3L),
+        )
+
+        decision.changedMangaIds shouldBe setOf(1L)
+        decision.keptIds shouldBe setOf(1L, 3L)
+        decision.skippedUnchangedIds shouldBe setOf(2L)
+    }
+
+    @Test
     fun `non komga entry is always kept`() {
         val decision = decide(
             entries = listOf(entry(1, baseUrl = null, seriesId = null)),
