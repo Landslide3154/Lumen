@@ -145,13 +145,8 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     // KMK <--
 
     // KMK -->
-    private var pendingKomgaWatermarks: Map<String, String> = emptyMap()
-    private var pendingKomgaSkippedCount = 0
-    private var pendingKomgaChangedCount = 0
-    private var pendingKomgaFallbackReason: String? = null
-    private var pendingKomgaSummary: String = ""
+    private var pendingKomga: KomgaIncrementalFilter.Outcome? = null
     private var pendingKomgaFailedIds: Set<Long> = emptySet()
-    private var komgaRanIncremental = false
     private var komgaFullLibraryRun = false
 
     private val komgaFilter by lazy {
@@ -270,17 +265,20 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
      * 水位线只在整库更新时推进（局部更新提前推进会导致范围外的变化被漏掉）。
      */
     private fun commitKomgaIncrementalState() {
-        if (!komgaRanIncremental) return
-        if (pendingKomgaWatermarks.isNotEmpty()) {
+        val outcome = pendingKomga ?: return
+        if (!outcome.ranIncremental) return
+
+        // 水位线只在整库更新时推进：局部更新时 Komga 上「本次范围之外」的变化还没被处理
+        if (komgaFullLibraryRun && outcome.newWatermarks.isNotEmpty()) {
             // 与已有水位线合并：本次失败/未涉及的服务器不该被抹掉
             val merged = KomgaWatermarks.decode(libraryPreferences.komgaWatermarks().get()) +
-                pendingKomgaWatermarks
+                outcome.newWatermarks
             libraryPreferences.komgaWatermarks().set(KomgaWatermarks.encode(merged))
         }
-        libraryPreferences.komgaSkippedCount().set(pendingKomgaSkippedCount)
-        libraryPreferences.komgaChangedCount().set(pendingKomgaChangedCount)
-        libraryPreferences.komgaFallbackReason().set(pendingKomgaFallbackReason.orEmpty())
-        libraryPreferences.komgaSummary().set(pendingKomgaSummary)
+        libraryPreferences.komgaSkippedCount().set(outcome.skipped.size)
+        libraryPreferences.komgaChangedCount().set(outcome.changedCount)
+        libraryPreferences.komgaFallbackReason().set(outcome.fallbackReason.orEmpty())
+        libraryPreferences.komgaSummary().set(outcome.summary)
         // 本次失败的 Komga 条目下次强制重试一次，避免一次瞬时失败 = 此后永不再自动更新。
         // 只在整库更新时重写名单：局部更新没涉及到的失败条目会被抹掉，那些条目就再也没机会重试了。
         if (komgaFullLibraryRun) {
@@ -433,14 +431,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             )
             filtered = outcome.kept
             skippedUpdates += outcome.skipped
-            // 只有整库更新才能推进水位线：局部更新时 Komga 上「本次范围之外」的变化还没被处理，
-            // 提前推进会让它们下次不再被算作有变化（漏更新）。
-            pendingKomgaWatermarks = if (fullLibrary) outcome.newWatermarks else emptyMap()
-            pendingKomgaSkippedCount = outcome.skipped.size
-            pendingKomgaChangedCount = outcome.changedCount
-            pendingKomgaFallbackReason = outcome.fallbackReason
-            pendingKomgaSummary = outcome.summary
-            komgaRanIncremental = outcome.ranIncremental
+            pendingKomga = outcome
         }
 
         mangaToUpdate = filtered
