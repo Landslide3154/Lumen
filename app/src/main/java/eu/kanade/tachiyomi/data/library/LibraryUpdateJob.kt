@@ -152,6 +152,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private var pendingKomgaSummary: String = ""
     private var pendingKomgaFailedIds: Set<Long> = emptySet()
     private var komgaRanIncremental = false
+    private var komgaFullLibraryRun = false
 
     private val komgaFilter by lazy {
         KomgaIncrementalFilter(
@@ -277,8 +278,11 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         libraryPreferences.komgaChangedCount().set(pendingKomgaChangedCount)
         libraryPreferences.komgaFallbackReason().set(pendingKomgaFallbackReason.orEmpty())
         libraryPreferences.komgaSummary().set(pendingKomgaSummary)
-        // 本次失败的 Komga 条目下次强制重试一次，避免一次瞬时失败 = 此后永不再自动更新
-        libraryPreferences.komgaRetryIds().set(encodeRetryIds(pendingKomgaFailedIds))
+        // 本次失败的 Komga 条目下次强制重试一次，避免一次瞬时失败 = 此后永不再自动更新。
+        // 只在整库更新时重写名单：局部更新没涉及到的失败条目会被抹掉，那些条目就再也没机会重试了。
+        if (komgaFullLibraryRun) {
+            libraryPreferences.komgaRetryIds().set(encodeRetryIds(pendingKomgaFailedIds))
+        }
     }
     // KMK <--
 
@@ -421,6 +425,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         // 单本定向更新在前面就 return 了，永远不会被跳过。
         if (libraryPreferences.incrementalUpdateMode().get() == LibraryUpdateMode.INCREMENTAL) {
             val fullLibrary = isFullLibraryUpdate(categoryId, group)
+            komgaFullLibraryRun = fullLibrary
             val outcome = komgaFilter.apply(
                 candidates = filtered,
                 watermarksRaw = libraryPreferences.komgaWatermarks().get(),

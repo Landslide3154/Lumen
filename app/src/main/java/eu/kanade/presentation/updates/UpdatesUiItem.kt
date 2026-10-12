@@ -93,7 +93,7 @@ internal fun LazyListScope.updatesLastUpdatedItem(
     }
 
     // KMK -->
-    if (komgaSummary.isNotEmpty()) {
+    if (komgaSummary.isNotEmpty() || komgaFallbackReason.isNotEmpty()) {
         // 增量更新的完整数字：始终显示，否则「跳过 0 部」时页面上什么线索都没有
         item(key = "updates-komga-summary") {
             Column(

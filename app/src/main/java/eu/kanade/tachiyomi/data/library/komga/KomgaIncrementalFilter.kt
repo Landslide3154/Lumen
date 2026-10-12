@@ -46,13 +46,15 @@ class KomgaIncrementalFilter(
         run(candidates, watermarksRaw, retryIdsRaw, policy)
     } catch (e: Exception) {
         if (e is CancellationException) throw e
-        // 承诺是「任何异常都不会少更新」：出错就保留全部条目，退回全量
+        // 承诺是「任何异常都不会少更新」：出错就保留全部条目，退回全量。
+        // 但必须把原因带上，否则更新页什么都不显示，用户完全不知道这次为什么全量跑了一遍。
         logcat(LogPriority.WARN, e) { "Komga incremental: filter failed, falling back to full update" }
         Outcome(
             kept = candidates,
             skipped = emptyList(),
             newWatermarks = emptyMap(),
             ranIncremental = true,
+            fallbackReason = "exception: ${e::class.simpleName}: ${e.message}",
         )
     }
 

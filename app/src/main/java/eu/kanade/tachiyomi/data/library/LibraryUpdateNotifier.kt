@@ -66,6 +66,7 @@ class LibraryUpdateNotifier(
     }
 
     // KMK --> 通知不再放大图标（只保留左侧小图标）
+    // KMK <--
 
     /**
      * Cached progress notification to avoid creating a lot.
