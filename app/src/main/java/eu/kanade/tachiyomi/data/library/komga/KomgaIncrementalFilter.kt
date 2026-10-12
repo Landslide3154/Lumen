@@ -23,6 +23,7 @@ class KomgaIncrementalFilter(
     private val client: OkHttpClient,
     private val json: Json,
 ) {
+    private val api = KomgaChangeSetClient(client, json)
 
     data class Outcome(
         val kept: List<LibraryManga>,
@@ -113,7 +114,8 @@ class KomgaIncrementalFilter(
             }
         }
 
-        val decision = decide(entries, outcomes, policy, parseRetryIds(retryIdsRaw))
+        val retryIds = parseRetryIds(retryIdsRaw)
+        val decision = decide(entries, outcomes, policy, retryIds)
         val unchangedReason = context.stringResource(KMR.strings.skipped_reason_komga_unchanged)
         val unavailableReason = context.stringResource(KMR.strings.skipped_reason_komga_unavailable)
 
@@ -135,7 +137,7 @@ class KomgaIncrementalFilter(
             "Komga incremental: servers=${servers.size} candidates=${candidates.size} " +
                 "kept=${kept.size} skippedUnchanged=${decision.skippedUnchangedIds.size} " +
                 "skippedUnavailable=${decision.skippedUnavailableIds.size} " +
-                "retry=${parseRetryIds(retryIdsRaw).size} policy=$policy"
+                "retry=${retryIds.size} policy=$policy"
         }
 
         return Outcome(

@@ -249,7 +249,6 @@
     <string name="pref_komga_unavailable_fallback">Fall back to full update</string>
     <string name="pref_komga_unavailable_skip">Skip Komga entries</string>
     <string name="pref_library_update_incremental_note">Incremental updates only fetch entries that changed on Komga. Auto-refreshing manga details is not affected; if your Komga library sits on a network share, adding books may not be detected — switch to Full once.</string>
-    <string name="updates_skipped_komga_info">Last incremental update: %1$d changed, %2$d skipped (no changes on Komga)</string>
     <string name="updates_komga_fallback_info">Last incremental check failed (%1$s), fell back to a full update</string>
     <string name="updates_komga_summary">Incremental run: %1$d server(s), %2$d page(s) fetched, %3$d changed, %4$d skipped</string>
 </resources>
