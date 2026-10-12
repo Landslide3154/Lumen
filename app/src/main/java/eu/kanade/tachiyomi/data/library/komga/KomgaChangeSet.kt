@@ -96,6 +96,24 @@ suspend fun collectChangedSeries(
                                 pages = pagesFetched,
                             )
                         }
+
+                        // 首次（还没有水位线）：本轮本来就全部按「有变化」处理，
+                        // 只要第 1 页的 maxSeen 来建立水位线就够了 —— 不必翻完所有页，
+                        // 既省掉 9 次大响应，也不会因为撞上 maxPages 上限而永远建不起水位线。
+                        if (watermark == null) {
+                            val newest = items.firstNotNullOfOrNull { item ->
+                                item.lastModified?.takeIf { KomgaWatermarks.parseLastModified(it) != null }
+                            }
+                            complete = true
+                            empty = true
+                            return@withTimeoutOrNull KomgaChangeSet(
+                                changed = changed,
+                                maxSeen = newest,
+                                complete = complete,
+                                empty = empty,
+                                pages = pagesFetched,
+                            )
+                        }
                     }
 
                     var stopped = false

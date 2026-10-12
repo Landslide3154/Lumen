@@ -48,7 +48,8 @@ class KomgaChangeSetTest {
         val fetch: suspend (Int) -> KomgaPageResult = { KomgaPageResult.Ok(page) }
 
         val first = collectChangedSeries(watermark = null, fetchPage = fetch)
-        first.changedIds shouldBe setOf("A", "B")
+        first.empty shouldBe true // 首次：整库都按「有变化」处理
+        first.maxSeen shouldBe "2026-10-12T03:00:00Z"
 
         // 拿上次看到的最大时间当水位线：这一次不该再收集到任何东西，
         // 否则「时间最新的那一部」会在每次更新时被反复同步（用户实际遇到的现象）。
@@ -63,7 +64,7 @@ class KomgaChangeSetTest {
     }
 
     @Test
-    fun `null watermark collects everything until last page`() = runTest {
+    fun `first run only needs the first page to establish the watermark`() = runTest {
         val pages = listOf(
             KomgaPage(listOf(item("A", "03:00"), item("B", "02:00")), isLast = false),
             KomgaPage(listOf(item("C", "01:00")), isLast = true),
@@ -78,10 +79,34 @@ class KomgaChangeSetTest {
             },
         )
 
-        result.changedIds shouldBe setOf("A", "B", "C")
-        requested shouldBe listOf(0, 1)
+        // 只取第 1 页：首次本来就全部按「有变化」处理，翻完所有页纯属浪费，
+        // 库超过 5000 部时还会撞上 maxPages 上限、永远建不起水位线。
+        requested shouldBe listOf(0)
+        result.empty shouldBe true
         result.complete shouldBe true
+        result.pages shouldBe 1
         result.maxSeen shouldBe "2026-10-12T03:00:00Z"
+    }
+
+    @Test
+    fun `paging with a watermark still walks pages`() = runTest {
+        val pages = listOf(
+            KomgaPage(listOf(item("A", "03:00"), item("B", "02:00")), isLast = false),
+            KomgaPage(listOf(item("C", "01:30")), isLast = true),
+        )
+        val requested = mutableListOf<Int>()
+
+        val result = collectChangedSeries(
+            watermark = wm("00:00"),
+            fetchPage = { page ->
+                requested += page
+                KomgaPageResult.Ok(pages[page])
+            },
+        )
+
+        requested shouldBe listOf(0, 1)
+        result.changedIds shouldBe setOf("A", "B", "C")
+        result.pages shouldBe 2
     }
 
     @Test
@@ -90,7 +115,8 @@ class KomgaChangeSetTest {
         val requested = mutableListOf<Int>()
 
         val result = collectChangedSeries(
-            watermark = null,
+            // 有水位线才会真的翻页（首次只取第 1 页即可，见上一条测试）
+            watermark = wm("00:00"),
             fetchPage = { p ->
                 requested += p
                 KomgaPageResult.Ok(page)
