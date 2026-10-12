@@ -1,4 +1,4 @@
-import mihon.buildlogic.Config
+﻿import mihon.buildlogic.Config
 import mihon.buildlogic.getBuildTime
 import mihon.buildlogic.getCommitCount
 import mihon.buildlogic.getGitSha
@@ -22,6 +22,12 @@ if (Config.includeTelemetry) {
 
 shortcutHelper.setFilePath("./shortcuts.xml")
 
+// KMK -->
+/** Lumen 鑷湁鐗堟湰搴忓彿锛氭瘡娆′氦浠?+1锛岀増鏈彿鏄剧ず涓?涓婃父鐗堟湰.01 / .02 鈥?*/
+val lumenRevision = 3
+val lumenVersionName = "1.14.1." + lumenRevision.toString().padStart(2, '0')
+// KMK <--
+
 android {
     namespace = "eu.kanade.tachiyomi"
 
@@ -30,8 +36,10 @@ android {
         applicationId = "app.lumen"
         // KMK <--
 
-        versionCode = 82
-        versionName = "1.14.1"
+        // KMK -->
+        versionCode = 82 * 100 + lumenRevision
+        versionName = lumenVersionName
+        // KMK <--
 
         buildConfigField("String", "COMMIT_COUNT", "\"${getCommitCount()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"${getGitSha()}\"")
@@ -80,7 +88,9 @@ android {
 
             applicationIdSuffix = ".beta"
 
-            versionNameSuffix = debug.versionNameSuffix
+            // KMK --> 浜や粯鐗堜笉杩藉姞鎻愪氦鍙凤紝鐗堟湰鍙峰氨鏄?1.14.1.01 杩欐牱
+            versionNameSuffix = ""
+            // KMK <--
             signingConfig = debug.signingConfig
 
             matchingFallbacks.addAll(commonMatchingFallbacks)
@@ -108,10 +118,12 @@ android {
 
     splits {
         abi {
+            // KMK --> 鍙嚭 arm64-v8a 涓€涓寘
             isEnable = true
-            isUniversalApk = true
+            isUniversalApk = false
             reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            include("arm64-v8a")
+            // KMK <--
         }
     }
 
@@ -353,3 +365,15 @@ buildscript {
         classpath(kotlinx.gradle)
     }
 }
+
+// KMK -->
+// APK 鏂囦欢鍚嶅甫涓婅蒋浠跺悕涓庣増鏈彿锛歀umen-1.14.1.01.apk
+// 锛圓GP 8 鐨?VariantOutput 娌℃湁鍏紑鐨?outputFileName 鍐欏叆鍙ｏ紝鏋勫缓瀹屾敼鍚嶏級
+tasks.matching { it.name.startsWith("assemble") }.configureEach {
+    doLast {
+        val variantDir = file("build/outputs/apk/${name.removePrefix("assemble").lowercase()}")
+        variantDir.listFiles { f: File -> f.isFile && f.extension == "apk" && !f.name.startsWith("Lumen-") }
+            ?.forEach { it.renameTo(File(variantDir, "Lumen-$lumenVersionName.apk")) }
+    }
+}
+// KMK <--

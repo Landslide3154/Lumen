@@ -30,12 +30,8 @@ class EHentaiUpdateNotifier(private val context: Context) {
         maximumFractionDigits = 0
     }
 
-    /**
-     * Bitmap of the app for notifications.
-     */
-    private val notificationBitmap by lazy {
-        BitmapFactory.decodeResource(context.resources, R.drawable.komikku)
-    }
+    // KMK -->
+    // 通知不再放大图标（只保留左侧小图标）
 
     /**
      * Cached progress notification to avoid creating a lot.
@@ -45,7 +41,6 @@ class EHentaiUpdateNotifier(private val context: Context) {
             setContentTitle(context.stringResource(MR.strings.app_name))
             setSmallIcon(R.drawable.ic_refresh_24dp)
             setColor(ContextCompat.getColor(context, R.color.ic_launcher))
-            setLargeIcon(notificationBitmap)
             setOngoing(true)
             setOnlyAlertOnce(true)
         }
@@ -99,7 +94,6 @@ class EHentaiUpdateNotifier(private val context: Context) {
             setContentText(context.stringResource(MR.strings.action_show_errors))
             setSmallIcon(R.drawable.ic_komikku)
             setColor(ContextCompat.getColor(context, R.color.ic_launcher))
-            setLargeIcon(notificationBitmap)
 
             setContentIntent(NotificationReceiver.openErrorLogPendingActivity(context, uri))
         }

@@ -149,7 +149,6 @@ class DiscordRPCService : Service() {
         val builder = context.notificationBuilder(Notifications.CHANNEL_DISCORD_RPC) {
             setSmallIcon(R.drawable.ic_discord_24dp)
             setColor(ContextCompat.getColor(context, R.color.ic_launcher))
-            setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.komikku))
             setContentText(context.getString(R.string.pref_discord_rpc))
             // KMK -->
             setContentTitle(context.getString(R.string.app_name))

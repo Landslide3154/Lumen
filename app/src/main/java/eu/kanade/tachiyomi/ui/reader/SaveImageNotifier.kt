@@ -57,12 +57,7 @@ class SaveImageNotifier(private val context: Context) {
     }
 
     // KMK -->
-    /**
-     * Bitmap of the app for notifications.
-     */
-    private val notificationBitmap by lazy {
-        BitmapFactory.decodeResource(context.resources, R.drawable.komikku)
-    }
+    // 通知不再放大图标（只保留左侧小图标）
     // KMK <--
 
     /**
@@ -73,7 +68,6 @@ class SaveImageNotifier(private val context: Context) {
         // Create notification
         with(notificationBuilder) {
             // KMK -->
-            setLargeIcon(notificationBitmap)
             // KMK <--
             setContentTitle(context.stringResource(MR.strings.download_notifier_title_error))
             setContentText(error ?: context.stringResource(MR.strings.unknown_error))
@@ -90,7 +84,6 @@ class SaveImageNotifier(private val context: Context) {
                 setStyle(
                     NotificationCompat.BigPictureStyle()
                         // KMK -->
-                        .bigLargeIcon(notificationBitmap)
                         .setBigContentTitle(context.stringResource(MR.strings.picture_saved))
                         // KMK <--
                         .bigPicture(it),

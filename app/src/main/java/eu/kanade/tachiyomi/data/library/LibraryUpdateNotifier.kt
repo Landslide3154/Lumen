@@ -65,12 +65,7 @@ class LibraryUpdateNotifier(
         NotificationReceiver.cancelLibraryUpdatePendingBroadcast(context)
     }
 
-    /**
-     * Bitmap of the app for notifications.
-     */
-    private val notificationBitmap by lazy {
-        BitmapFactory.decodeResource(context.resources, R.drawable.komikku)
-    }
+    // KMK --> 通知不再放大图标（只保留左侧小图标）
 
     /**
      * Cached progress notification to avoid creating a lot.
@@ -80,7 +75,6 @@ class LibraryUpdateNotifier(
             setContentTitle(context.stringResource(MR.strings.app_name))
             setSmallIcon(R.drawable.ic_refresh_24dp)
             setColor(ContextCompat.getColor(context, R.color.ic_launcher))
-            setLargeIcon(notificationBitmap)
             setOngoing(true)
             setOnlyAlertOnce(true)
             addAction(R.drawable.ic_close_24dp, context.stringResource(MR.strings.action_cancel), cancelIntent)
@@ -207,7 +201,6 @@ class LibraryUpdateNotifier(
 
             setSmallIcon(R.drawable.ic_komikku)
             setColor(ContextCompat.getColor(context, R.color.ic_launcher))
-            setLargeIcon(notificationBitmap)
 
             setGroup(Notifications.GROUP_NEW_CHAPTERS)
             setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
@@ -250,7 +243,6 @@ class LibraryUpdateNotifier(
                 setStyle(
                     NotificationCompat.BigPictureStyle()
                         .bigPicture(icon)
-                        .bigLargeIcon(notificationBitmap)
                         .setBigContentTitle(manga.title)
                         .setSummaryText(description),
                 )

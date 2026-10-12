@@ -29,7 +29,6 @@ class SyncNotifier(private val context: Context) {
     ) {
         setSmallIcon(R.drawable.ic_komikku)
         setColor(ContextCompat.getColor(context, R.color.ic_launcher))
-        setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.komikku))
         setAutoCancel(false)
         setOngoing(true)
         setOnlyAlertOnce(true)
@@ -40,7 +39,6 @@ class SyncNotifier(private val context: Context) {
     ) {
         setSmallIcon(R.drawable.ic_komikku)
         setColor(ContextCompat.getColor(context, R.color.ic_launcher))
-        setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.komikku))
         setAutoCancel(false)
     }
 

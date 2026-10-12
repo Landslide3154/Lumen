@@ -262,7 +262,10 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private fun commitKomgaIncrementalState() {
         if (!komgaRanIncremental) return
         if (pendingKomgaWatermarks.isNotEmpty()) {
-            libraryPreferences.komgaWatermarks().set(KomgaWatermarks.encode(pendingKomgaWatermarks))
+            // 与已有水位线合并：本次失败/未涉及的服务器不该被抹掉
+            val merged = KomgaWatermarks.decode(libraryPreferences.komgaWatermarks().get()) +
+                pendingKomgaWatermarks
+            libraryPreferences.komgaWatermarks().set(KomgaWatermarks.encode(merged))
         }
         libraryPreferences.komgaSkippedCount().set(pendingKomgaSkippedCount)
         // 本次失败的 Komga 条目下次强制重试一次，避免一次瞬时失败 = 此后永不再自动更新
