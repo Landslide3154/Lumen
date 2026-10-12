@@ -75,8 +75,8 @@ import tachiyomi.presentation.core.util.selectedBackground
 internal fun LazyListScope.updatesLastUpdatedItem(
     lastUpdated: Long,
     // KMK -->
-    komgaSkippedCount: Int = 0,
-    komgaChangedCount: Int = 0,
+    komgaSummary: String = "",
+    komgaFallbackReason: String = "",
     // KMK <--
 ) {
     item(key = "updates-lastUpdated") {
@@ -93,21 +93,24 @@ internal fun LazyListScope.updatesLastUpdatedItem(
     }
 
     // KMK -->
-    if (komgaSkippedCount > 0) {
-        item(key = "updates-komga-skipped") {
-            Box(
+    if (komgaSummary.isNotEmpty()) {
+        // 增量更新的完整数字：始终显示，否则「跳过 0 部」时页面上什么线索都没有
+        item(key = "updates-komga-summary") {
+            Column(
                 modifier = Modifier
                     .animateItemFastScroll()
                     .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
             ) {
                 Text(
-                    text = stringResource(
-                        KMR.strings.updates_skipped_komga_info,
-                        komgaChangedCount,
-                        komgaSkippedCount,
-                    ),
+                    text = komgaSummary,
                     fontStyle = FontStyle.Italic,
                 )
+                if (komgaFallbackReason.isNotEmpty()) {
+                    Text(
+                        text = stringResource(KMR.strings.updates_komga_fallback_info, komgaFallbackReason),
+                        fontStyle = FontStyle.Italic,
+                    )
+                }
             }
         }
     }

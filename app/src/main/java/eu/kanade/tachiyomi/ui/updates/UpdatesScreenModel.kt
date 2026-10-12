@@ -83,6 +83,8 @@ class UpdatesScreenModel(
     // KMK -->
     val komgaSkippedCount by libraryPreferences.komgaSkippedCount().asState(screenModelScope)
     val komgaChangedCount by libraryPreferences.komgaChangedCount().asState(screenModelScope)
+    val komgaFallbackReason by libraryPreferences.komgaFallbackReason().asState(screenModelScope)
+    val komgaSummary by libraryPreferences.komgaSummary().asState(screenModelScope)
     // KMK <--
 
     // SY -->

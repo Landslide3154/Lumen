@@ -67,4 +67,45 @@ class KomgaServerOutcomeTest {
         toServerOutcome(changeSet, null) shouldBe
             KomgaServerOutcome.Ok(setOf("A"), "2020-01-01T00:00:00Z", empty = false)
     }
+
+    @Test
+    fun `fallback reason is null on a successful query`() {
+        val changeSet = KomgaChangeSet(setOf("A"), "2026-10-12T03:00:00Z", complete = true, empty = false, pages = 1)
+
+        fallbackReason(changeSet, watermark) shouldBe null
+    }
+
+    @Test
+    fun `fallback reason keeps the failure reason`() {
+        val changeSet = KomgaChangeSet(
+            changedIds = emptySet(),
+            maxSeen = null,
+            complete = false,
+            empty = false,
+            pages = 0,
+            failureReason = "timeout after 5000ms",
+        )
+
+        fallbackReason(changeSet, watermark) shouldBe "timeout after 5000ms"
+    }
+
+    @Test
+    fun `fallback reason reports backwards watermark`() {
+        val changeSet = KomgaChangeSet(
+            changedIds = emptySet(),
+            maxSeen = "2026-10-12T01:00:00Z",
+            complete = true,
+            empty = false,
+            pages = 1,
+        )
+
+        fallbackReason(changeSet, watermark) shouldBe "watermark ahead of Komga"
+    }
+
+    @Test
+    fun `fallback reason defaults for an incomplete set without a reason`() {
+        val changeSet = KomgaChangeSet(emptySet(), null, complete = false, empty = false, pages = 10)
+
+        fallbackReason(changeSet, watermark) shouldBe "incomplete result (page/time limit)"
+    }
 }

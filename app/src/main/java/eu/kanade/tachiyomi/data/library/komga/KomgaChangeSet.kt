@@ -43,7 +43,7 @@ suspend fun collectChangedSeries(
     watermark: LocalDateTime?,
     fetchPage: suspend (page: Int) -> KomgaPageResult,
     maxPages: Int = 10,
-    timeoutMillis: Long = 5_000,
+    timeoutMillis: Long = 15_000,
 ): KomgaChangeSet {
     var pagesFetched = 0
 
@@ -136,5 +136,19 @@ fun toServerOutcome(changeSet: KomgaChangeSet, watermark: LocalDateTime?): Komga
 
     else ->
         KomgaServerOutcome.Failed(changeSet.failureReason ?: "incomplete result (page/time limit)")
+}
+
+/**
+ * 这次查询是否需要回退全量，以及原因；正常时返回 null。
+ *
+ * 回退时更新页会把这句原因显示出来——否则用户只看到「这次全量跑了一遍」，
+ * 完全不知道是网络超时、401 还是翻页被截断（日志默认被日志级别挡掉）。
+ */
+fun fallbackReason(changeSet: KomgaChangeSet, watermark: LocalDateTime?): String? = when {
+    KomgaWatermarks.isBackwards(changeSet.maxSeen, watermark) -> "watermark ahead of Komga"
+
+    changeSet.complete -> null
+
+    else -> changeSet.failureReason ?: "incomplete result (page/time limit)"
 }
 // KMK <--

@@ -105,6 +105,18 @@ class LibraryPreferences(
         0,
     )
 
+    /** 上一次增量查询失败/异常而回退全量的原因，供更新页显示（正常时为空串）。 */
+    fun komgaFallbackReason() = preferenceStore.getString(
+        Preference.appStateKey("library_update_komga_fallback_reason"),
+        "",
+    )
+
+    /** 上一次增量的完整数字摘要，供更新页始终显示。 */
+    fun komgaSummary() = preferenceStore.getString(
+        Preference.appStateKey("library_update_komga_summary"),
+        "",
+    )
+
     /** 上一次更新失败的 Komga 条目 id（逗号分隔），下次强制重试一次。 */
     fun komgaRetryIds() = preferenceStore.getString(
         Preference.appStateKey("library_update_komga_retry_ids"),

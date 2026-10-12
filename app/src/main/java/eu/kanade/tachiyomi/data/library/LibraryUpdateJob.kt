@@ -148,6 +148,8 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private var pendingKomgaWatermarks: Map<String, String> = emptyMap()
     private var pendingKomgaSkippedCount = 0
     private var pendingKomgaChangedCount = 0
+    private var pendingKomgaFallbackReason: String? = null
+    private var pendingKomgaSummary: String = ""
     private var pendingKomgaFailedIds: Set<Long> = emptySet()
     private var komgaRanIncremental = false
 
@@ -156,7 +158,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             context = context,
             client = Injekt.get<NetworkHelper>().client.newBuilder()
                 .dns(Dns.SYSTEM)
-                .callTimeout(5, TimeUnit.SECONDS)
+                .callTimeout(15, TimeUnit.SECONDS)
                 .build(),
             json = Injekt.get(),
         )
@@ -270,6 +272,8 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         }
         libraryPreferences.komgaSkippedCount().set(pendingKomgaSkippedCount)
         libraryPreferences.komgaChangedCount().set(pendingKomgaChangedCount)
+        libraryPreferences.komgaFallbackReason().set(pendingKomgaFallbackReason.orEmpty())
+        libraryPreferences.komgaSummary().set(pendingKomgaSummary)
         // 本次失败的 Komga 条目下次强制重试一次，避免一次瞬时失败 = 此后永不再自动更新
         libraryPreferences.komgaRetryIds().set(encodeRetryIds(pendingKomgaFailedIds))
     }
@@ -425,6 +429,8 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             pendingKomgaWatermarks = outcome.newWatermarks
             pendingKomgaSkippedCount = outcome.skipped.size
             pendingKomgaChangedCount = outcome.changedCount
+            pendingKomgaFallbackReason = outcome.fallbackReason
+            pendingKomgaSummary = outcome.summary
             komgaRanIncremental = outcome.ranIncremental
         }
 

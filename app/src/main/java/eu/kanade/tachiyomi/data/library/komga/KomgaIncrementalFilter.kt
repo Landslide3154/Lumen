@@ -31,6 +31,10 @@ class KomgaIncrementalFilter(
         val ranIncremental: Boolean,
         /** Komga 明确报告「有变化」的条目数（更新页显示用）。 */
         val changedCount: Int = 0,
+        /** 查询失败/异常导致回退全量时的原因（更新页显示用），正常时为 null。 */
+        val fallbackReason: String? = null,
+        /** 本次增量的完整数字（更新页始终显示，便于用户/开发者判断是否按预期工作）。 */
+        val summary: String = "",
     )
 
     suspend fun apply(
@@ -86,6 +90,8 @@ class KomgaIncrementalFilter(
         val watermarks = KomgaWatermarks.decode(watermarksRaw)
         val api = KomgaChangeSetClient(client, json)
         val outcomes = mutableMapOf<String, KomgaServerOutcome>()
+        val fallbackReasons = mutableListOf<String>()
+        var pagesTotal = 0
 
         for ((baseUrl, config) in servers) {
             val watermark = KomgaWatermarks.parseLastModified(watermarks[baseUrl])
@@ -94,6 +100,8 @@ class KomgaIncrementalFilter(
                 fetchPage = { page -> api.fetchPage(baseUrl, config, page) },
             )
             outcomes[baseUrl] = toServerOutcome(changeSet, watermark)
+            fallbackReason(changeSet, watermark)?.let { fallbackReasons += it }
+            pagesTotal += changeSet.pages
 
             logcat(LogPriority.INFO) {
                 "Komga incremental: server=$baseUrl pages=${changeSet.pages} " +
@@ -134,6 +142,14 @@ class KomgaIncrementalFilter(
             newWatermarks = decision.newWatermarks,
             ranIncremental = true,
             changedCount = decision.changedMangaIds.size,
+            fallbackReason = fallbackReasons.takeIf { it.isNotEmpty() }?.joinToString("; "),
+            summary = context.stringResource(
+                KMR.strings.updates_komga_summary,
+                servers.size,
+                pagesTotal,
+                decision.changedMangaIds.size,
+                decision.skippedUnchangedIds.size + decision.skippedUnavailableIds.size,
+            ),
         )
     }
 }

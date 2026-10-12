@@ -51,8 +51,8 @@ fun UpdateScreen(
     snackbarHostState: SnackbarHostState,
     lastUpdated: Long,
     // KMK -->
-    komgaSkippedCount: Int,
-    komgaChangedCount: Int = 0,
+    komgaSummary: String = "",
+    komgaFallbackReason: String = "",
     // KMK <--
     // SY -->
     preserveReadingPosition: Boolean,
@@ -140,7 +140,11 @@ fun UpdateScreen(
                     FastScrollLazyColumn(
                         contentPadding = contentPadding,
                     ) {
-                        updatesLastUpdatedItem(lastUpdated, komgaSkippedCount, komgaChangedCount)
+                        updatesLastUpdatedItem(
+                            lastUpdated,
+                            komgaSummary,
+                            komgaFallbackReason,
+                        )
 
                         updatesUiItems(
                             // KMK -->

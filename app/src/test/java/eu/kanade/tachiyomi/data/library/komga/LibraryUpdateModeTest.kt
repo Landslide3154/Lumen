@@ -53,6 +53,8 @@ class LibraryUpdateModeTest {
         preferences.komgaWatermarks().key() shouldBe "__APP_STATE_library_update_komga_watermarks"
         preferences.komgaSkippedCount().key() shouldBe "__APP_STATE_library_update_komga_skipped_count"
         preferences.komgaChangedCount().key() shouldBe "__APP_STATE_library_update_komga_changed_count"
+        preferences.komgaFallbackReason().key() shouldBe "__APP_STATE_library_update_komga_fallback_reason"
+        preferences.komgaSummary().key() shouldBe "__APP_STATE_library_update_komga_summary"
         preferences.komgaRetryIds().key() shouldBe "__APP_STATE_library_update_komga_retry_ids"
     }
 
