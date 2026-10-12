@@ -154,27 +154,51 @@ suspend fun collectChangedSeries(
 }
 
 /**
- * 把一次查询结果换算成服务器结局。
+ * 一次查询的结局：交给 decider 的服务器结局 + 需要回退时的原因（正常为 null）。
+ *
+ * 两者判的是同一组分支，所以只在这里判一次 —— 否则很容易改了一处忘了另一处。
+ */
+data class KomgaQueryOutcome(
+    val outcome: KomgaServerOutcome,
+    val fallbackReason: String?,
+)
+
+/**
+ * 把一次查询结果换算成结局。
  *
  * 时间倒流（Komga 从备份恢复、最新系列被删）按规格 §6.4-7 处理：本次**全部**按「有变化」
  * （`empty = true` 让 decider 保留该服务器的所有条目），**并且**用本次的 maxSeen 推进水位线，
  * 否则水位线会永远卡在未来、SKIP 策略下所有 Komga 条目被永久跳过。
  */
-fun toServerOutcome(changeSet: KomgaChangeSet, watermark: LocalDateTime?): KomgaServerOutcome = when {
-    KomgaWatermarks.isBackwards(changeSet.maxSeen, watermark) ->
-        KomgaServerOutcome.Ok(
+fun queryOutcome(changeSet: KomgaChangeSet, watermark: LocalDateTime?): KomgaQueryOutcome = when {
+    KomgaWatermarks.isBackwards(changeSet.maxSeen, watermark) -> KomgaQueryOutcome(
+        outcome = KomgaServerOutcome.Ok(
             changedIds = emptySet(),
             maxSeen = changeSet.maxSeen,
             empty = true,
             times = changeSet.changed,
-        )
+        ),
+        fallbackReason = "watermark ahead of Komga",
+    )
 
-    changeSet.complete ->
-        KomgaServerOutcome.Ok(changeSet.changedIds, changeSet.maxSeen, changeSet.empty, times = changeSet.changed)
+    changeSet.complete -> KomgaQueryOutcome(
+        outcome = KomgaServerOutcome.Ok(
+            changedIds = changeSet.changedIds,
+            maxSeen = changeSet.maxSeen,
+            empty = changeSet.empty,
+            times = changeSet.changed,
+        ),
+        fallbackReason = null,
+    )
 
-    else ->
-        KomgaServerOutcome.Failed(changeSet.failureReason ?: "incomplete result (page/time limit)")
+    else -> {
+        val reason = changeSet.failureReason ?: "incomplete result (page/time limit)"
+        KomgaQueryOutcome(outcome = KomgaServerOutcome.Failed(reason), fallbackReason = reason)
+    }
 }
+
+fun toServerOutcome(changeSet: KomgaChangeSet, watermark: LocalDateTime?): KomgaServerOutcome =
+    queryOutcome(changeSet, watermark).outcome
 
 /**
  * 这次查询是否需要回退全量，以及原因；正常时返回 null。
@@ -182,11 +206,6 @@ fun toServerOutcome(changeSet: KomgaChangeSet, watermark: LocalDateTime?): Komga
  * 回退时更新页会把这句原因显示出来——否则用户只看到「这次全量跑了一遍」，
  * 完全不知道是网络超时、401 还是翻页被截断（日志默认被日志级别挡掉）。
  */
-fun fallbackReason(changeSet: KomgaChangeSet, watermark: LocalDateTime?): String? = when {
-    KomgaWatermarks.isBackwards(changeSet.maxSeen, watermark) -> "watermark ahead of Komga"
-
-    changeSet.complete -> null
-
-    else -> changeSet.failureReason ?: "incomplete result (page/time limit)"
-}
+fun fallbackReason(changeSet: KomgaChangeSet, watermark: LocalDateTime?): String? =
+    queryOutcome(changeSet, watermark).fallbackReason
 // KMK <--

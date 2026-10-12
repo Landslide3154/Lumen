@@ -252,14 +252,17 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     }
 
     // KMK -->
+    /** 分类为「全部」时的分组判定：这一段逻辑原本在 addMangaToQueue 里也写了一遍，抽出来共用。 */
+    private fun isWholeLibraryScope(group: Int, groupUpdateType: GroupLibraryMode): Boolean =
+        group == LibraryGroup.BY_DEFAULT ||
+            groupUpdateType == GroupLibraryMode.GLOBAL ||
+            (groupUpdateType == GroupLibraryMode.ALL_BUT_UNGROUPED && group == LibraryGroup.UNGROUPED)
+
     /** 只有覆盖整库的更新才做增量过滤，也才允许推进水位线。 */
     private fun isFullLibraryUpdate(categoryId: Long, group: Int): Boolean {
         if (categoryId != -1L) return false
         if (inputData.getLongArray(KEY_MANGA_IDS) != null) return false
-        val groupUpdateType = libraryPreferences.groupLibraryUpdateType().get()
-        return group == LibraryGroup.BY_DEFAULT ||
-            groupUpdateType == GroupLibraryMode.GLOBAL ||
-            (groupUpdateType == GroupLibraryMode.ALL_BUT_UNGROUPED && group == LibraryGroup.UNGROUPED)
+        return isWholeLibraryScope(group, libraryPreferences.groupLibraryUpdateType().get())
     }
 
     /**
@@ -321,11 +324,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         val listToUpdate = if (categoryId != -1L) {
             libraryManga.filter { categoryId in it.categories }
             // SY -->
-        } else if (
-            group == LibraryGroup.BY_DEFAULT ||
-            groupLibraryUpdateType == GroupLibraryMode.GLOBAL ||
-            (groupLibraryUpdateType == GroupLibraryMode.ALL_BUT_UNGROUPED && group == LibraryGroup.UNGROUPED)
-        ) {
+        } else if (isWholeLibraryScope(group, groupLibraryUpdateType)) {
             // SY <--
             val includedCategories = libraryPreferences.updateCategories().get().map { it.toLong() }.toSet()
             val excludedCategories = libraryPreferences.updateCategoriesExclude().get().map { it.toLong() }.toSet()

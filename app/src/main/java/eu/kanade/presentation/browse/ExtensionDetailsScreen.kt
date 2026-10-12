@@ -61,7 +61,7 @@ import eu.kanade.tachiyomi.util.system.copyToClipboard
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.i18n.MR
-import tachiyomi.i18n.sy.SYMR
+import tachiyomi.i18n.kmk.KMR
 import tachiyomi.presentation.core.components.ScrollbarLazyColumn
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
@@ -188,7 +188,9 @@ private fun ExtensionDetails(
         // SY -->
         if (extension.isRedundant) {
             item {
-                WarningBanner(SYMR.strings.redundant_extension_message)
+                // KMK --> 用 Lumen 自己的文案，避免改上游所有（Weblate 拥有）的 i18n-sy
+                WarningBanner(KMR.strings.redundant_extension_message)
+                // KMK <--
             }
         }
         // SY <--

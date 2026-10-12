@@ -65,14 +65,14 @@ class KomgaIncrementalFilter(
         retryIdsRaw: String,
         policy: KomgaUnavailablePolicy,
     ): Outcome {
-        val refs = candidates.map { parseKomgaSeriesUrl(it.manga.url) }
-        val entries = candidates.mapIndexed { index, libraryManga ->
+        val entries = candidates.map { libraryManga ->
+            val ref = parseKomgaSeriesUrl(libraryManga.manga.url)
             KomgaEntryRef(
                 mangaId = libraryManga.manga.id,
                 sourceId = libraryManga.manga.source,
-                baseUrl = refs[index]?.baseUrl,
+                baseUrl = ref?.baseUrl,
                 // id 不像 Komga 的 id（被编码过、含空格等）时不做增量判断，避免永久误跳过
-                seriesId = refs[index]?.seriesId?.takeIf { isMatchableKomgaSeriesId(it) },
+                seriesId = ref?.seriesId?.takeIf { isMatchableKomgaSeriesId(it) },
             )
         }
 
@@ -102,8 +102,9 @@ class KomgaIncrementalFilter(
                 watermark = watermark,
                 fetchPage = { page -> api.fetchPage(baseUrl, config, page) },
             )
-            outcomes[baseUrl] = toServerOutcome(changeSet, watermark)
-            fallbackReason(changeSet, watermark)?.let { fallbackReasons += it }
+            val query = queryOutcome(changeSet, watermark)
+            outcomes[baseUrl] = query.outcome
+            query.fallbackReason?.let { fallbackReasons += it }
             pagesTotal += changeSet.pages
 
             logcat(LogPriority.INFO) {

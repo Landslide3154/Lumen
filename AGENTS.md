@@ -60,6 +60,10 @@ Every Komikku addition or modification to existing code **must** be wrapped:
 
 **Self-check before finishing:** `git diff` must not add new `<string name="…">` or `<plurals name="…">` entries under non-`base` locales in `i18n-kmk/src/`, `i18n/src/`, or `i18n-sy/src/`.
 
+<!-- KMK -->
+**Lumen fork 的唯一例外：`i18n/src/…/base/strings.xml` 的 `app_name`。** 应用显示名没有其它落点（`MR.strings.app_name` 与 Android 资源同名，改别处会 merge 冲突），所以这一条直接改在上游 base 里，其余上游字符串一律不改——需要不同措辞时新增 `i18n-kmk` 的条目并在调用点改用 `KMR`（例：`ExtensionDetailsScreen` 的冗余扩展提示）。
+<!-- /KMK -->
+
 ### Formatting & build verification
 
 **“Build passes” is not enough.** After Kotlin/XML edits, run **in this order** before marking work complete:
