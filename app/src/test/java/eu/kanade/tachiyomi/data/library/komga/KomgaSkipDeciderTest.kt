@@ -20,7 +20,57 @@ class KomgaSkipDeciderTest {
         changedIds: Set<String> = emptySet(),
         maxSeen: String? = null,
         empty: Boolean = false,
-    ) = KomgaServerOutcome.Ok(changedIds, maxSeen, empty)
+        // 服务器报告的「每个有变化系列各自的时间」；不传就按 maxSeen 兜底
+        times: Map<String, String?> = changedIds.associateWith { maxSeen },
+    ) = KomgaServerOutcome.Ok(changedIds = times.keys, maxSeen = maxSeen, empty = empty, times = times)
+
+    @Test
+    fun `watermark never advances past entries that were not processed`() {
+        // Komga 说 S2(03:00) 比 S1(01:00) 新，但本轮只有 S1 是候选（S2 被分类设置/更新限制排除在外）
+        val decision = decide(
+            entries = listOf(entry(1, seriesId = "S1")),
+            outcomes = mapOf(
+                "https://h" to ok(
+                    maxSeen = "2026-10-12T03:00:00Z",
+                    times = mapOf("S1" to "2026-10-12T01:00:00Z", "S2" to "2026-10-12T03:00:00Z"),
+                ),
+            ),
+            policy = KomgaUnavailablePolicy.FALLBACK_FULL,
+        )
+
+        decision.keptIds shouldBe setOf(1L)
+        // 只处理了 S1 → 水位线只能推到 S1 的时间；否则 S2 下次会被永远跳过
+        decision.newWatermarks shouldBe mapOf("https://h" to "2026-10-12T01:00:00Z")
+    }
+
+    @Test
+    fun `watermark advances to maxSeen when every changed entry was kept`() {
+        val decision = decide(
+            entries = listOf(entry(1, seriesId = "S1"), entry(2, seriesId = "S2")),
+            outcomes = mapOf(
+                "https://h" to ok(
+                    maxSeen = "2026-10-12T03:00:00Z",
+                    times = mapOf("S1" to "2026-10-12T01:00:00Z", "S2" to "2026-10-12T03:00:00Z"),
+                ),
+            ),
+            policy = KomgaUnavailablePolicy.FALLBACK_FULL,
+        )
+
+        decision.keptIds shouldBe setOf(1L, 2L)
+        decision.newWatermarks shouldBe mapOf("https://h" to "2026-10-12T03:00:00Z")
+    }
+
+    @Test
+    fun `empty komga state keeps everything and still advances`() {
+        val decision = decide(
+            entries = listOf(entry(1, seriesId = "S1")),
+            outcomes = mapOf("https://h" to ok(maxSeen = "2026-10-12T05:00:00Z", empty = true)),
+            policy = KomgaUnavailablePolicy.FALLBACK_FULL,
+        )
+
+        decision.keptIds shouldBe setOf(1L)
+        decision.newWatermarks shouldBe mapOf("https://h" to "2026-10-12T05:00:00Z")
+    }
 
     @Test
     fun `changed count only counts entries Komga reported as changed`() {

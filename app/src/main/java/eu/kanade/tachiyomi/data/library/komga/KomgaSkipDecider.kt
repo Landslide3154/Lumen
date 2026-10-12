@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.data.library.komga
 
 import tachiyomi.domain.library.service.LibraryPreferences.KomgaUnavailablePolicy
+import java.time.LocalDateTime
 
 // KMK -->
 /** 一条待更新条目在 Komga 视角下的身份；解析不出 baseUrl/seriesId 的就是「非增量条目」。 */
@@ -12,7 +13,16 @@ data class KomgaEntryRef(
 )
 
 sealed interface KomgaServerOutcome {
-    data class Ok(val changedIds: Set<String>, val maxSeen: String?, val empty: Boolean) : KomgaServerOutcome
+    /**
+     * @param times 本次查询里每个有变化系列各自的时间（seriesId → lastModified）。
+     *   水位线只允许推进到「本轮真正处理过」的条目上，所以必须带着这个映射。
+     */
+    data class Ok(
+        val changedIds: Set<String>,
+        val maxSeen: String?,
+        val empty: Boolean,
+        val times: Map<String, String?> = emptyMap(),
+    ) : KomgaServerOutcome
 
     data class Failed(val reason: String) : KomgaServerOutcome
 }
@@ -26,7 +36,6 @@ data class KomgaDecision(
     /** 仅来自成功且拿到 maxSeen 的服务器。 */
     val newWatermarks: Map<String, String>,
 )
-
 /**
  * 纯函数：把「条目 × 各服务器结果 × 兜底策略」换算成「保留 / 跳过」。
  *
@@ -82,9 +91,22 @@ fun decide(
         }
     }
 
+    // 水位线只推进到「本轮真正保留下来、会去更新」的条目的最大时间。
+    // 直接拿服务器返回的全局 maxSeen，会把「本轮被分类设置/更新限制排除在外」的系列一起越过，
+    // 那些系列从此每轮都算「无变化」被跳过（静默漏更新，且不会自愈）。
     val newWatermarks = outcomes.mapNotNull { (baseUrl, outcome) ->
-        val maxSeen = (outcome as? KomgaServerOutcome.Ok)?.maxSeen
-        if (maxSeen == null) null else baseUrl to maxSeen
+        val ok = outcome as? KomgaServerOutcome.Ok ?: return@mapNotNull null
+
+        // 时间倒流 / Komga 空库：该服务器本轮所有条目都被保留 → 可以直接推进到 maxSeen
+        if (ok.empty) return@mapNotNull ok.maxSeen?.let { baseUrl to it }
+
+        val newest = entries.asSequence()
+            .filter { it.baseUrl == baseUrl && it.mangaId in keptIds }
+            .mapNotNull { entry -> entry.seriesId?.let { ok.times[it] } }
+            .maxByOrNull { KomgaWatermarks.parseLastModified(it) ?: LocalDateTime.MIN }
+            ?: return@mapNotNull null
+
+        baseUrl to newest
     }.toMap()
 
     return KomgaDecision(

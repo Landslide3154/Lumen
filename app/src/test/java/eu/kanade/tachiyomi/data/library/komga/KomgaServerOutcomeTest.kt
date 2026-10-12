@@ -22,7 +22,12 @@ class KomgaServerOutcomeTest {
         )
 
         toServerOutcome(changeSet, watermark) shouldBe
-            KomgaServerOutcome.Ok(setOf("A"), "2026-10-12T03:00:00Z", empty = false)
+            KomgaServerOutcome.Ok(
+                setOf("A"),
+                "2026-10-12T03:00:00Z",
+                empty = false,
+                times = mapOf("A" to "2026-10-12T03:00:00Z"),
+            )
     }
 
     @Test
@@ -65,7 +70,12 @@ class KomgaServerOutcomeTest {
         )
 
         toServerOutcome(changeSet, null) shouldBe
-            KomgaServerOutcome.Ok(setOf("A"), "2020-01-01T00:00:00Z", empty = false)
+            KomgaServerOutcome.Ok(
+                setOf("A"),
+                "2020-01-01T00:00:00Z",
+                empty = false,
+                times = mapOf("A" to "2020-01-01T00:00:00Z"),
+            )
     }
 
     @Test

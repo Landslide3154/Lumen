@@ -18,21 +18,36 @@ sealed interface KomgaPageResult {
 /**
  * 一次「哪些系列有变化」的查询结果。
  *
- * @param changedIds `lastModified >= 水位线` 的 seriesId
- * @param maxSeen 本次看到的最大 lastModified（原样字符串），作为成功后的新水位线
+ * @param changed 有变化的系列：seriesId → lastModified（原样字符串）。
+ *   存时间而不是只存 id，是因为水位线只能推进到**本轮真正处理过**的那些条目，
+ *   否则被分类设置/更新限制排除在外的系列会被水位线越过，从此静默漏更新。
+ * @param maxSeen 本次看到的最大 lastModified（原样字符串）
  * @param complete false 表示命中页数/时间上限或请求失败，调用方应按策略回退
- * @param empty Komga 上一本书都没有 → 调用方视为「全部有变化」
+ * @param empty Komga 上一本书都没有（或时间倒流）→ 调用方视为「全部有变化」
  * @param pages 成功取到的页数（用于日志诊断）
  * @param failureReason 失败原因（HTTP 码 / 异常消息 / timeout），不含凭据
  */
 data class KomgaChangeSet(
-    val changedIds: Set<String>,
+    val changed: Map<String, String?>,
     val maxSeen: String?,
     val complete: Boolean,
     val empty: Boolean,
     val pages: Int = 0,
     val failureReason: String? = null,
-)
+) {
+    /** 只关心「哪些系列有变化」时用。 */
+    val changedIds: Set<String> get() = changed.keys
+
+    /** 便利构造：只给「哪些系列有变化」，时间统一按 [maxSeen] 兜底。 */
+    constructor(
+        changedIds: Set<String>,
+        maxSeen: String?,
+        complete: Boolean,
+        empty: Boolean,
+        pages: Int = 0,
+        failureReason: String? = null,
+    ) : this(changedIds.associateWith { maxSeen }, maxSeen, complete, empty, pages, failureReason)
+}
 
 /**
  * 逐页收集变更集合。按 lastModified 倒序，遇到比水位线更旧的条目即停止翻页。
@@ -48,7 +63,7 @@ suspend fun collectChangedSeries(
     var pagesFetched = 0
 
     val collected: KomgaChangeSet? = withTimeoutOrNull(timeoutMillis) {
-        val changedIds = mutableSetOf<String>()
+        val changed = mutableMapOf<String, String?>()
         var maxSeen: String? = null
         var maxSeenParsed: LocalDateTime? = null
         var empty = false
@@ -58,7 +73,7 @@ suspend fun collectChangedSeries(
         while (page < maxPages) {
             when (val result = fetchPage(page)) {
                 is KomgaPageResult.Failed -> return@withTimeoutOrNull KomgaChangeSet(
-                    changedIds = emptySet(),
+                    changed = emptyMap(),
                     maxSeen = null,
                     complete = false,
                     empty = false,
@@ -74,7 +89,7 @@ suspend fun collectChangedSeries(
                         if (empty) {
                             complete = true
                             return@withTimeoutOrNull KomgaChangeSet(
-                                changedIds = changedIds,
+                                changed = changed,
                                 maxSeen = null,
                                 complete = complete,
                                 empty = empty,
@@ -91,7 +106,7 @@ suspend fun collectChangedSeries(
                             maxSeen = item.lastModified
                         }
                         if (KomgaWatermarks.isChanged(item.lastModified, watermark)) {
-                            changedIds += item.id
+                            changed[item.id] = item.lastModified
                         } else {
                             stopped = true
                             break
@@ -107,11 +122,11 @@ suspend fun collectChangedSeries(
             }
         }
 
-        KomgaChangeSet(changedIds, maxSeen, complete, empty, pages = pagesFetched)
+        KomgaChangeSet(changed, maxSeen, complete, empty, pages = pagesFetched)
     }
 
     return collected ?: KomgaChangeSet(
-        changedIds = emptySet(),
+        changed = emptyMap(),
         maxSeen = null,
         complete = false,
         empty = false,
@@ -129,10 +144,15 @@ suspend fun collectChangedSeries(
  */
 fun toServerOutcome(changeSet: KomgaChangeSet, watermark: LocalDateTime?): KomgaServerOutcome = when {
     KomgaWatermarks.isBackwards(changeSet.maxSeen, watermark) ->
-        KomgaServerOutcome.Ok(changedIds = emptySet(), maxSeen = changeSet.maxSeen, empty = true)
+        KomgaServerOutcome.Ok(
+            changedIds = emptySet(),
+            maxSeen = changeSet.maxSeen,
+            empty = true,
+            times = changeSet.changed,
+        )
 
     changeSet.complete ->
-        KomgaServerOutcome.Ok(changeSet.changedIds, changeSet.maxSeen, changeSet.empty)
+        KomgaServerOutcome.Ok(changeSet.changedIds, changeSet.maxSeen, changeSet.empty, times = changeSet.changed)
 
     else ->
         KomgaServerOutcome.Failed(changeSet.failureReason ?: "incomplete result (page/time limit)")
