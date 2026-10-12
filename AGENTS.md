@@ -24,9 +24,9 @@ Features: configurable reader, downloads/offline reading, trackers (MyAnimeList,
 |------|-------------------|
 | Branch | Create a **feature branch** for the task (`git checkout -b <type>/<short-description>`, e.g. `feat/manga-recommendations`). |
 | Commit | **OK** on a feature branch when work is ready. **Never** commit directly to `master` / `main` unless the user explicitly asks. |
-| Push | **OK** to push the **current feature branch** when work is ready. **Never** push to `master` / `main` unless the user explicitly asks. |
+| Push | **Never push unless the user explicitly asks**（本机全局 `C:\Users\godis\.dsh\AGENTS.md` §2 优先于本文件，2026-10-13）. When work is ready on a feature branch, commit locally and stop; report "committed, not pushed". **Never** push to `master` / `main` unless the user explicitly asks. |
 
-Before `git push`, confirm the current branch is not `master` or `main` (`git branch --show-current`).
+Before `git push`, confirm the user asked for it, and that the current branch is not `master` or `main` (`git branch --show-current`).
 
 ### Fork markers
 
