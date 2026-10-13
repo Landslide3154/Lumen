@@ -154,7 +154,7 @@ class SyncYomiSyncService(
      */
     private suspend fun doSyncV2(syncData: SyncData, full: Boolean): SyncResult {
         val backup = syncData.backup ?: return SyncResult(null, changed = false, protocolV2 = true)
-        val host = syncPreferences.clientHost().get()
+        val host = syncPreferences.syncHost()
         val apiKey = syncPreferences.clientAPIKey().get()
 
         val pendingDeleted = syncPreferences.pendingDeletedCategoryUids().get()
@@ -227,7 +227,7 @@ class SyncYomiSyncService(
      * 200 means v2, 404 means an old server; anything else is a transient failure and is not cached.
      */
     suspend fun supportsV2(): Boolean {
-        val host = syncPreferences.clientHost().get()
+        val host = syncPreferences.syncHost()
         if (syncPreferences.v2ProbedHost().get() == host) {
             return syncPreferences.serverSupportsV2().get()
         }
@@ -259,7 +259,7 @@ class SyncYomiSyncService(
     // KMK <--
 
     private suspend fun pullSyncData(): Pair<SyncData?, String> {
-        val host = syncPreferences.clientHost().get()
+        val host = syncPreferences.syncHost()
         val apiKey = syncPreferences.clientAPIKey().get()
         val downloadUrl = "$host/api/sync/content"
 
@@ -322,7 +322,7 @@ class SyncYomiSyncService(
     private suspend fun pushSyncData(syncData: SyncData, eTag: String): Boolean {
         val backup = syncData.backup ?: return true
 
-        val host = syncPreferences.clientHost().get()
+        val host = syncPreferences.syncHost()
         val apiKey = syncPreferences.clientAPIKey().get()
         val uploadUrl = "$host/api/sync/content"
 
@@ -377,7 +377,7 @@ class SyncYomiSyncService(
     private suspend fun reportSyncEvent(event: SyncEventStatus, message: String? = null) {
         withContext(NonCancellable) {
             try {
-                val host = syncPreferences.clientHost().get()
+                val host = syncPreferences.syncHost()
                 val apiKey = syncPreferences.clientAPIKey().get()
                 val url = "$host/api/sync/event"
 

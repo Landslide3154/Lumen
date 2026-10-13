@@ -252,4 +252,10 @@
     <string name="updates_komga_fallback_info">Last incremental check failed (%1$s), fell back to a full update</string>
     <string name="redundant_extension_message">This extension is redundant and will not be used inside this version of Lumen.</string>
     <string name="updates_komga_summary">Incremental run: %1$d server(s), %2$d page(s) fetched, %3$d changed, %4$d skipped</string>
+
+    <!-- Lumen 同步协议状态 -->
+    <string name="pref_sync_protocol_v2">Sync protocol: v2</string>
+    <string name="pref_sync_protocol_v1">Sync protocol: v1 (old server)</string>
+    <string name="pref_sync_protocol_unknown">Sync protocol: not probed yet</string>
+    <string name="pref_sync_protocol_summary">v2 uploads only what changed and syncs deletions; v1 does neither. Tap to probe the server again on the next sync.</string>
 </resources>

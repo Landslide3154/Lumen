@@ -24,7 +24,7 @@ shortcutHelper.setFilePath("./shortcuts.xml")
 
 // KMK -->
 /** Lumen 自有版本序号：每次交付 +1，版本号显示为 上游版本.01 / .02 … */
-val lumenRevision = 17
+val lumenRevision = 18
 val lumenVersionName = "1.14.1." + lumenRevision.toString().padStart(2, '0')
 // KMK <--
 

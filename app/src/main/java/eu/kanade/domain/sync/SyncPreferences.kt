@@ -37,6 +37,29 @@ class SyncPreferences(
     /** The host [serverSupportsV2] belongs to, so switching servers re-probes. */
     fun v2ProbedHost() = preferenceStore.getString(Preference.appStateKey("sync_v2_probed_host"), "")
 
+    // KMK -->
+    /** Which protocol the configured server answered the capability probe with. */
+    enum class SyncProtocol { UNKNOWN, V2, V1 }
+
+    /** The configured server address, without trailing whitespace or slashes. */
+    fun syncHost(): String = clientHost().get().trim().trimEnd('/')
+
+    fun probedProtocol(): SyncProtocol = when {
+        v2ProbedHost().get() != syncHost() -> SyncProtocol.UNKNOWN
+        serverSupportsV2().get() -> SyncProtocol.V2
+        else -> SyncProtocol.V1
+    }
+
+    /**
+     * Forgets the cached probe so the next sync asks the server again. Needed after the server is
+     * upgraded to a version that implements protocol v2, which the client cannot notice by itself.
+     */
+    fun forgetProtocolProbe() {
+        v2ProbedHost().set("")
+        serverSupportsV2().set(false)
+    }
+    // KMK <--
+
     /** Category uids deleted locally but not yet acknowledged by the server as tombstones. */
     fun pendingDeletedCategoryUids() = preferenceStore.getStringSet(
         Preference.appStateKey("sync_pending_deleted_category_uids"),

@@ -1,193 +1,91 @@
 <div align="center">
 
-<a href="https://komikku-app.github.io">
-  <img width=200px height=200px src="./.github/readme-images/app-icon.png"/>
-</a><br/>
-<a href="https://trendshift.io/repositories/13696" target="_blank"><img src="https://trendshift.io/api/badge/repositories/13696" alt="komikku-app%2Fkomikku | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
- <h1 align="center"> Komikku </h1>
+<img width=160px height=160px src="./.github/readme-images/app-icon.png"/>
 
-| Releases | Preview |
-|----------|---------|
-| <div align="center"> [![GitHub downloads](https://img.shields.io/github/downloads/komikku-app/komikku/latest/total?label=Latest%20Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/komikku-app/komikku/releases/latest) [![GitHub downloads](https://img.shields.io/github/downloads/komikku-app/komikku/total?label=Total%20Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/komikku-app/komikku/releases) [![Stable build](https://img.shields.io/github/actions/workflow/status/komikku-app/komikku/build_release.yml?labelColor=27303D&label=Stable&labelColor=06599d&color=043b69)](https://github.com/komikku-app/komikku/actions/workflows/build_release.yml) | <div align="center"> [![GitHub downloads](https://img.shields.io/github/downloads/komikku-app/komikku-preview/latest/total?label=Latest%20Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/komikku-app/komikku-preview/releases/latest) [![GitHub downloads](https://img.shields.io/github/downloads/komikku-app/komikku-preview/total?label=Total%20Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/komikku-app/komikku-preview/releases) [![Preview build](https://img.shields.io/github/actions/workflow/status/komikku-app/komikku-preview/build_app.yml?labelColor=27303D&label=Preview&labelColor=2c2c47&color=1c1c39)](https://github.com/komikku-app/komikku-preview/actions/workflows/build_app.yml) |
+# Lumen
 
-*Requires Android 8.0 or higher.*
+安卓漫画阅读器，**Komikku 的 fork**（上游链路：Tachiyomi → Mihon → TachiyomiSY → Komikku → Lumen）。
 
-[![Discord](https://img.shields.io/discord/1242381704459452488.svg?label=&labelColor=6A7EC2&color=7389D8&logo=discord&logoColor=FFFFFF)](https://discord.gg/85jB7V5AJR)
-[![CI](https://img.shields.io/github/actions/workflow/status/komikku-app/komikku/build_push.yml?labelColor=27303D&label=CI)](https://github.com/komikku-app/komikku/actions/workflows/build_push.yml)
-[![License: Apache-2.0](https://img.shields.io/github/license/komikku-app/komikku?labelColor=27303D&color=0877d2)](/LICENSE)
-[![Translation status](https://img.shields.io/weblate/progress/komikku-app?labelColor=27303D&color=946300)](https://hosted.weblate.org/engage/komikku-app/)
+[下载最新版](https://github.com/Landslide3154/Lumen/releases/latest) ·
+[报告问题](https://github.com/Landslide3154/Lumen/issues) ·
+[更新日志](https://github.com/Landslide3154/Lumen/releases)
 
-## Download
+*Lumen is a fork of [Komikku](https://github.com/komikku-app/komikku) with a SyncYomi protocol v2 client, incremental Komga library updates and its own branding. Chinese-first README below.*
 
-[![Stable](https://img.shields.io/github/release/komikku-app/komikku.svg?maxAge=3600&label=Stable&labelColor=06599d&color=043b69)](https://github.com/komikku-app/komikku/releases/latest)
-[![Preview](https://img.shields.io/github/v/release/komikku-app/komikku-preview.svg?maxAge=3600&label=Preview&labelColor=2c2c47&color=1c1c39)](https://github.com/komikku-app/komikku-preview/releases/latest)
+</div>
 
-*Requires Android 8.0 or higher.*
+## 下载与安装
 
-[![Sponsor me on GitHub](https://custom-icon-badges.demolab.com/badge/-Sponsor-ea4aaa?style=for-the-badge&logo=heart&logoColor=white)](https://github.com/sponsors/cuong-tran "Sponsor me on GitHub")
+- 安装包在 [Releases](https://github.com/Landslide3154/Lumen/releases/latest)：文件名形如 `Lumen-arm64-v8a-1.14.1.17.apk`，只出 **arm64-v8a** 一个 ABI
+- 要求 **Android 8.0** 及以上；包名 `app.lumen.beta`，与上游 Komikku 共存互不影响
+- 版本号 = 上游版本 + 交付序号，例如 `1.14.1.17` 表示「基于上游 1.14.1 的第 17 次交付」
 
-<div align="left">
-A free and open source manga reader which is based off TachiyomiSY & Mihon/Tachiyomi. This fork is meant to provide new & useful features while regularly take features/updates from Mihon or other forks like SY, J2K and Neko...
+## 这个 fork 做了什么（相对上游 Komikku）
 
-![screenshots of app](./.github/readme-images/screens.png)
+### 一、SyncYomi 协议 v2 客户端（多设备同步）
 
-<div align="left">
+- **服务端合并取代客户端合并**：缺失不再等于删除。不会再出现「新加的漫画同步不过去，先读一页再同步就正常了」这类丢条目问题
+- **增量同步**：上传只带自上次成功同步后变化的内容，下载只取 cursor 之后变化的项，不再整库搬运
+- **流式上传**：逐条写 protobuf 记录再 gzip 分块发送，大书库不再内存溢出
+- **分类删除走显式墓碑**：删掉的分类 uid 随请求头 `X-Sync-Deleted-Categories` 上报，另一台设备下次同步即删除，不会复活
+- **分类新增稳定 uid 与合并版本**：改名、改序、隐藏都能跨设备收敛，不再多出重复分类
+- **老服务端自动回退 v1**：capabilities 返回 404 时完全按改动前行为工作
+- 要求：服务端 **SyncYomi ≥ 1.3.0**；客户端的「设置 → 数据 → 同步」里会显示当前用的是 **v2** 还是 **v1**
 
-## Features
+### 二、Komga 增量书库更新
 
-### Komikku's unique features:
-- `Suggestions` automatically showing source-website's recommendations / suggestions / related to current entry for all sources.
-- `Hidden categories` to hide yours things from *nosy* people.
-- `Auto theme color` based on each entry's cover for entry View & Reader.
-- `App custom theme` with `Color palettes` for endless color lover.
-- `Bulk-favorite` multiple entries all at once.
-- Source & Language icon on Library & various places. (Some language flags are not really accurate)
-- `Feed` now supports **all** sources, with more items (20 for now).
-- Fast browsing (for who with large library experiencing slow loading)
-- Grouped entries in Update tab (inspired by J2K).
-- Update notification with manga cover.
-- Auto `2-way sync` progress with trackers.
-- Chips for `Saved search` in source browse
-- `Panorama cover` showing wide cover in full.
-- `Merge multiple` library entries together at same time.
-- `Range-selection` for Migration.
-- Ability to `enable/disable repo`, with icon.
-- `Update Error` screen & migrating them away.
-- `to-be-updated` screen: which entries are going to be checked with smart-update?
-- `Search for sources` & Quick NSFW sources filter in Extensions, Browse & Migration screen.
-- `Feed` backup/restore/sync/re-order.
-- Long-click to add/remove single entry to/from library, everywhere.
-- Docking Read/Resume button to left/right.
-- In-app progress banner shows Library syncing / Backup restoring / Library updating progress.
-- Auto-install app update.
-- Configurable interval to refresh entries from downloaded storage.
-- Forked from SY so everything from SY.
-- Always up-to-date with Mihon & SY
-- More app themes & better UI, improvements...
+- 「整库更新」先查 Komga 的 `/api/v1/series/latest`，用本地水位线判断哪些作品有变化，没变化的条目直接不请求（因此也不会误删章节）；查询失败/超时自动回退全量
+- 「更新」页显示本次增量诊断：服务器数 / 查询页数 / 有变化数量 / 跳过数量 / 回退原因
+- 设置项：「更新方式（增量 / 全量）」「Komga 不可用时（回退全量 / 跳过）」
 
+### 三、品牌与细节
 
-<details>
-  <summary>Features from Mihon / Tachiyomi</summary>
+- 应用名改为 **Lumen**，新图标与闪屏（超椭圆底板 + 两层投影，见上方图标）
+- 通知不再放大图标（只保留左侧小图标），通知强调色统一为深墨色 `#0B1622`
+- Lumen 新增文案统一放 `i18n-kmk`（`KMR`），中文覆盖放在 app 模块的 `values-zh-rCN`，不碰 Weblate 拥有的上游语言文件
+- 本地构建的 APK 自动带软件名、ABI 与版本号，例如 `Lumen-arm64-v8a-1.14.1.17.apk`
 
-#### All up-to-date features from Mihon / Tachiyomi (original), include:
+## 上游功能
 
-* Online reading from a variety of sources
-* Local reading of downloaded content
-* A configurable reader with multiple viewers, reading directions and other settings.
-* Tracker support: [MyAnimeList](https://myanimelist.net/), [AniList](https://anilist.co/), [Kitsu](https://kitsu.app/), [MangaUpdates](https://mangaupdates.com), [Shikimori](https://shikimori.one), [Bangumi](https://bgm.tv/)
-* Categories to organize your library
-* Light and dark themes
-* Schedule updating your library for new chapters
-* Create backups locally to read offline or to your desired cloud service
-* Continue reading button in library
+上游 Komikku / TachiyomiSY / Mihon 的功能全部保留并持续跟进，包括：在线源阅读、本地下载阅读、可配置阅读器、追踪（MyAnimeList / AniList / Kitsu / MangaUpdates / Bangumi / Shikimori 等）、书库分类、定时更新、备份与恢复、Feed、合并漫画、自动 Webtoon、E-Hentai/ExHentai 等。详细清单见上游 [Komikku README](https://github.com/komikku-app/komikku)。
 
-</details>
+上游代码的改动一律用注释标记，便于跟进上游：
 
-<details>
-  <summary>Features from Tachiyomi SY</summary>
+| 标记 | 含义 |
+|---|---|
+| `// KMK -->` … `// KMK <--` | 本 fork（Lumen）的改动 |
+| `// SY -->` … `// SY <--` | 来自 TachiyomiSY 上游 |
+| 无标记 | Mihon / Tachiyomi 上游代码 |
 
-#### All features from TachiyomiSY:
-* Feed tab, where you can easily view the latest entries or saved search from multiple sources at same time.
-* Automatic webtoon detection, allowing the reader to switch to webtoon mode automatically when viewing one
-* Manga recommendations, uses MAL and Anilist, as well as Neko Similar Manga for Mangadex manga (Thanks to Az, She11Shocked, Carlos, and Goldbattle)
-* Lewd filter, hide the lewd manga in your library when you want to
-* Tracking filter, filter your tracked manga so you can see them or see non-tracked manga, made by She11Shocked
-* Search tracking status in library, made by She11Shocked
-* Custom categories for sources, liked the pinned sources, but you can make your own versions and put any sources in them
-* Manga info edit
-* Manga Cover view + share and save
-* Dynamic Categories, view the library in multiple ways
-* Smart background for reading modes like LTR or Vertical, changes the background based on the page color
-* Force disable webtoon zoom
-* Hentai features enable/disable, in advanced settings
-* Quick clean titles
-* Source migration, migrate all your manga from one source to another
-* Saving searches
-* Autoscroll
-* Page preload customization
-* Customize image cache size
-* Batch import of custom sources and featured extensions
-* Advanced source settings page, searching, enable/disable all
-* Click tag for local search, long click tag for global search
-* Merge multiple of the same manga from different sources
-* Drag and drop library sorting
-* Library search engine, includes exclude, quotes as absolute, and a bunch of other ways to search
-* New E-Hentai/ExHentai features, such as language settings and watched list settings
-* Enhanced views for internal and integrated sources
-* Enhanced usability for internal and delegated sources
+## 从源码构建
 
-Custom sources:
-* E-Hentai/ExHentai
+```bash
+./gradlew assemblePreview       # 交付版 APK（包名 app.lumen.beta）
+./gradlew assembleDebug         # 调试版（包名 app.lumen.dev）
+./gradlew spotlessCheck         # 格式门禁（CI 会跑）
+./gradlew testReleaseUnitTest   # 单元测试
+./gradlew verifySqlDelightMigration  # 校验数据库迁移
+```
 
-Additional features for some extensions, features include custom description, opening in app, batch add to library, and a bunch of other things based on the source:
-* 8Muses (EroMuse)
-* Mangadex
-* NHentai
-* Puruin
-* LANraragi
+- 需要 **JDK 21**（版本见 `.github/.java-version`）；首次构建会下载约 1 GB 依赖
+- 开发约定、模块结构、上游同步规则见 [AGENTS.md](./AGENTS.md)
+- 推送分支或 `lumen-v*` 标签会触发 [build-apk.yml](./.github/workflows/build-apk.yml) 自动构建；标签会额外建 Release 并附 APK
 
-</details>
+## 反馈问题
 
-## Issues, Feature Requests and Contributing
+请附上：版本号（更多 → 关于 → 版本）、复现步骤、截图。
+同步相关问题还请附上「设置 → 数据 → 同步」里显示的**协议版本（v1 / v2）**与**服务端版本**——v1 与 v2 的同步语义差别很大（v1 不会同步删除，也不会传增量）。
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+## 鸣谢
 
-<details><summary>Issues</summary>
+- [Komikku](https://github.com/komikku-app/komikku)（本 fork 的直接上游）
+- [TachiyomiSY](https://github.com/jobobby04/TachiyomiSY)
+- [Mihon](https://github.com/mihonapp/mihon) 与最初的 Tachiyomi
+- 以及所有为上述项目贡献过的开发者
 
-[Website](https://komikku-app.github.io/)
+## 免责声明
 
-1. **Before reporting a new issue, take a look at the [FAQ](https://komikku-app.github.io/docs/faq/general), the [changelog](https://github.com/komikku-app/komikku/releases) and the already opened [issues](https://github.com/komikku-app/komikku/issues).**
-2. If you are unsure, ask here: [![Discord](https://img.shields.io/discord/1242381704459452488.svg?label=&labelColor=6A7EC2&color=7389D8&logo=discord&logoColor=FFFFFF)](https://discord.gg/85jB7V5AJR)
-
-</details>
-
-<details><summary>Bugs</summary>
-
-* Include version (More → About → Version)
- * If not latest, try updating, it may have already been solved
- * Preview version is equal to the number of commits as seen on the main page
-* Include steps to reproduce (if not obvious from description)
-* Include screenshot (if needed)
-* If it could be device-dependent, try reproducing on another device (if possible)
-* Don't group unrelated requests into one issue
-
-Use the [issue forms](https://github.com/komikku-app/komikku/issues/new/choose) to submit a bug.
-
-</details>
-
-<details><summary>Feature Requests</summary>
-
-* Write a detailed issue, explaining what it should do or how.
-* Include screenshot (if needed).
-</details>
-
-<details><summary>Contributing</summary>
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
-</details>
-
-<details><summary>Code of Conduct</summary>
-
-See [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
-</details>
-
-<div align="center">
-
-### Credits
-
-Thank you to all the people who have contributed!
-
-<a href="https://github.com/komikku-app/komikku/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=komikku-app/komikku" alt="Komikku app contributors" title="Komikku app contributors" width="800"/>
-</a>
-
-![Visitor Count](https://count.getloli.com/get/@komikku-app?theme=capoo-2)
-
-### Disclaimer
-
-The developer(s) of this application does not have any affiliation with the content providers available, and this application hosts zero content.
-
-<div align="left">
+本应用的开发者与任何内容提供方均无关联，本应用自身不托管任何内容。
 
 ## License
 

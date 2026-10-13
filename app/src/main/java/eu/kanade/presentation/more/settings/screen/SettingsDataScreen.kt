@@ -737,6 +737,15 @@ object SettingsDataScreen : SearchableSettings {
             }
         }
 
+        // KMK -->
+        // Reading the stored values keeps this row in sync with the probe a background sync does;
+        // how they map to a protocol lives in SyncPreferences.
+        syncPreferences.clientHost().collectAsState()
+        syncPreferences.v2ProbedHost().collectAsState()
+        syncPreferences.serverSupportsV2().collectAsState()
+        val protocol = syncPreferences.probedProtocol()
+        // KMK <--
+
         return listOf(
             Preference.PreferenceItem.EditTextPreference(
                 preference = syncPreferences.clientHost(),
@@ -752,6 +761,22 @@ object SettingsDataScreen : SearchableSettings {
                     true
                 },
             ),
+            // KMK -->
+            // Which protocol the server speaks decides whether deletions and incremental uploads
+            // work at all: a server older than 1.3 answers the capability probe with 404 and the
+            // app silently stays on protocol v1, where a deleted category simply comes back.
+            Preference.PreferenceItem.TextPreference(
+                title = stringResource(
+                    when (protocol) {
+                        SyncPreferences.SyncProtocol.V2 -> KMR.strings.pref_sync_protocol_v2
+                        SyncPreferences.SyncProtocol.V1 -> KMR.strings.pref_sync_protocol_v1
+                        SyncPreferences.SyncProtocol.UNKNOWN -> KMR.strings.pref_sync_protocol_unknown
+                    },
+                ),
+                subtitle = stringResource(KMR.strings.pref_sync_protocol_summary),
+                onClick = { syncPreferences.forgetProtocolProbe() },
+            ),
+            // KMK <--
             Preference.PreferenceItem.CustomPreference(
                 title = stringResource(SYMR.strings.pref_sync_api_key),
             ) {
