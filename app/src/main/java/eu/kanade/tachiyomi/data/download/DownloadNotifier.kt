@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.data.download
 
 import android.app.PendingIntent
 import android.content.Context
-import android.graphics.BitmapFactory
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import eu.kanade.tachiyomi.R

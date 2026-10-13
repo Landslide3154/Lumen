@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.data.download
 
 import android.content.Context
 import android.content.pm.ServiceInfo
-import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.asFlow

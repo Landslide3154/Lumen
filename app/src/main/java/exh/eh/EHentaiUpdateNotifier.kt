@@ -1,7 +1,6 @@
 package exh.eh
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -29,10 +28,6 @@ class EHentaiUpdateNotifier(private val context: Context) {
         roundingMode = RoundingMode.DOWN
         maximumFractionDigits = 0
     }
-
-    // KMK -->
-    // 通知不再放大图标（只保留左侧小图标）
-    // KMK <--
 
     /**
      * Cached progress notification to avoid creating a lot.

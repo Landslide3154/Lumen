@@ -326,14 +326,22 @@ class SyncYomiSyncService(
         val apiKey = syncPreferences.clientAPIKey().get()
         val uploadUrl = "$host/api/sync/content"
 
-        val headersBuilder = baseHeaders(apiKey).add("Content-Encoding", "gzip")
+        // KMK -->
+        // The v1 upload stays uncompressed on purpose: a server old enough to be missing the v2
+        // endpoints may also predate request-body gzip (added in SyncYomi 1.2), and this path is
+        // the fallback for exactly those servers. The body is still streamed, so a large library
+        // never ends up in one byte array.
+        val headersBuilder = baseHeaders(apiKey)
+        // KMK <--
         if (eTag.isNotEmpty()) {
             headersBuilder.add("If-Match", eTag)
         }
         val headers = headersBuilder.build()
 
-        val body = BackupRequestBody(backup, protoBuf, gzip = true)
-        if (body.metaBytes.isEmpty() && backup.backupManga.isEmpty()) {
+        // KMK -->
+        val body = BackupRequestBody(backup, protoBuf)
+        // KMK <--
+        if (body.isEmpty()) {
             throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
         }
 

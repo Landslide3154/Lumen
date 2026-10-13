@@ -157,6 +157,7 @@ suspend fun collectChangedSeries(
  * 一次查询的结局：交给 decider 的服务器结局 + 需要回退时的原因（正常为 null）。
  *
  * 两者判的是同一组分支，所以只在这里判一次 —— 否则很容易改了一处忘了另一处。
+ * 回退原因会显示在更新页上，用户才知道这次为什么全量跑了一遍（超时 / 401 / 翻页被截断）。
  */
 data class KomgaQueryOutcome(
     val outcome: KomgaServerOutcome,
@@ -196,16 +197,4 @@ fun queryOutcome(changeSet: KomgaChangeSet, watermark: LocalDateTime?): KomgaQue
         KomgaQueryOutcome(outcome = KomgaServerOutcome.Failed(reason), fallbackReason = reason)
     }
 }
-
-fun toServerOutcome(changeSet: KomgaChangeSet, watermark: LocalDateTime?): KomgaServerOutcome =
-    queryOutcome(changeSet, watermark).outcome
-
-/**
- * 这次查询是否需要回退全量，以及原因；正常时返回 null。
- *
- * 回退时更新页会把这句原因显示出来——否则用户只看到「这次全量跑了一遍」，
- * 完全不知道是网络超时、401 还是翻页被截断（日志默认被日志级别挡掉）。
- */
-fun fallbackReason(changeSet: KomgaChangeSet, watermark: LocalDateTime?): String? =
-    queryOutcome(changeSet, watermark).fallbackReason
 // KMK <--

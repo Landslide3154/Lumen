@@ -18,7 +18,6 @@ import com.google.api.services.drive.DriveScopes
 import com.google.api.services.drive.model.File
 import eu.kanade.domain.sync.SyncPreferences
 import eu.kanade.tachiyomi.data.backup.models.Backup
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import logcat.LogPriority
@@ -35,8 +34,6 @@ import tachiyomi.i18n.sy.SYMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.IOException
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
 
 class GoogleDriveSyncService(context: Context, json: Json, syncPreferences: SyncPreferences) : SyncService(
     context,
@@ -143,52 +140,51 @@ class GoogleDriveSyncService(context: Context, json: Json, syncPreferences: Sync
         val backup = syncData.backup ?: return
 
         // KMK -->
-        // Streamed so a large library is never encoded into a single byte array
-        val body = BackupRequestBody(backup, protoBuf, gzip = true)
-        if (body.metaBytes.isEmpty() && backup.backupManga.isEmpty()) {
-            // KMK <--
-            throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
-        }
+        // Encoded into a cache file before the upload starts. Piping it straight into the request
+        // would turn a failure half way through the library into a truncated file that Drive still
+        // accepts, and the next sync would then read that instead of the real backup.
+        val cacheFile = context.cacheDir.resolve(remoteFileName)
+        try {
+            withIOContext {
+                val body = BackupRequestBody(backup, protoBuf, gzip = true)
+                if (body.isEmpty()) {
+                    throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
+                }
+                cacheFile.sink().buffer().use { body.writeTo(it) }
 
-        PipedOutputStream().use { pos ->
-            PipedInputStream(pos).use { pis ->
-                withIOContext {
-                    launch {
-                        // KMK -->
-                        pos.sink().buffer().use { body.writeTo(it) }
-                        // KMK <--
+                val mediaContent = InputStreamContent("application/octet-stream", cacheFile.inputStream())
+                    .apply { length = cacheFile.length() }
+
+                if (fileList.isNotEmpty()) {
+                    val fileId = fileList[0].id
+                    val fileMetadata = File().apply {
+                        name = remoteFileName
+                        mimeType = "application/octet-stream"
+                        appProperties = mapOf("deviceId" to syncData.deviceId)
                     }
-
-                    val mediaContent = InputStreamContent("application/octet-stream", pis)
-
-                    if (fileList.isNotEmpty()) {
-                        val fileId = fileList[0].id
-                        val fileMetadata = File().apply {
-                            name = remoteFileName
-                            mimeType = "application/octet-stream"
-                            appProperties = mapOf("deviceId" to syncData.deviceId)
-                        }
-                        drive.files().update(fileId, fileMetadata, mediaContent).execute()
-                        logcat(LogPriority.DEBUG) {
-                            "Updated existing sync data file in Google Drive with file ID: $fileId"
-                        }
-                    } else {
-                        val fileMetadata = File().apply {
-                            name = remoteFileName
-                            mimeType = "application/octet-stream"
-                            parents = listOf("appDataFolder")
-                            appProperties = mapOf("deviceId" to syncData.deviceId)
-                        }
-                        val uploadedFile = drive.files().create(fileMetadata, mediaContent)
-                            .setFields("id")
-                            .execute()
-                        logcat(LogPriority.DEBUG) {
-                            "Created new sync data file in Google Drive with file ID: ${uploadedFile.id}"
-                        }
+                    drive.files().update(fileId, fileMetadata, mediaContent).execute()
+                    logcat(LogPriority.DEBUG) {
+                        "Updated existing sync data file in Google Drive with file ID: $fileId"
+                    }
+                } else {
+                    val fileMetadata = File().apply {
+                        name = remoteFileName
+                        mimeType = "application/octet-stream"
+                        parents = listOf("appDataFolder")
+                        appProperties = mapOf("deviceId" to syncData.deviceId)
+                    }
+                    val uploadedFile = drive.files().create(fileMetadata, mediaContent)
+                        .setFields("id")
+                        .execute()
+                    logcat(LogPriority.DEBUG) {
+                        "Created new sync data file in Google Drive with file ID: ${uploadedFile.id}"
                     }
                 }
             }
+        } finally {
+            cacheFile.delete()
         }
+        // KMK <--
     }
 
     private fun getAppDataFileList(drive: Drive): MutableList<File> {

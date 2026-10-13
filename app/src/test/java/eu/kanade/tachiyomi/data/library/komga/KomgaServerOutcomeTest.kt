@@ -21,7 +21,7 @@ class KomgaServerOutcomeTest {
             pages = 2,
         )
 
-        toServerOutcome(changeSet, watermark) shouldBe
+        queryOutcome(changeSet, watermark).outcome shouldBe
             KomgaServerOutcome.Ok(
                 setOf("A"),
                 "2026-10-12T03:00:00Z",
@@ -41,7 +41,7 @@ class KomgaServerOutcomeTest {
             failureReason = "HTTP 401",
         )
 
-        (toServerOutcome(changeSet, watermark) as KomgaServerOutcome.Failed).reason shouldBe "HTTP 401"
+        (queryOutcome(changeSet, watermark).outcome as KomgaServerOutcome.Failed).reason shouldBe "HTTP 401"
     }
 
     @Test
@@ -55,7 +55,7 @@ class KomgaServerOutcomeTest {
         )
 
         // 规格 §6.4-7：判定异常后本次按「全部有变化」处理，并且要把水位线重置为新的最大值
-        toServerOutcome(changeSet, watermark) shouldBe
+        queryOutcome(changeSet, watermark).outcome shouldBe
             KomgaServerOutcome.Ok(emptySet(), "2026-10-12T01:00:00Z", empty = true)
     }
 
@@ -69,7 +69,7 @@ class KomgaServerOutcomeTest {
             pages = 1,
         )
 
-        toServerOutcome(changeSet, null) shouldBe
+        queryOutcome(changeSet, null).outcome shouldBe
             KomgaServerOutcome.Ok(
                 setOf("A"),
                 "2020-01-01T00:00:00Z",
@@ -82,7 +82,7 @@ class KomgaServerOutcomeTest {
     fun `fallback reason is null on a successful query`() {
         val changeSet = KomgaChangeSet(setOf("A"), "2026-10-12T03:00:00Z", complete = true, empty = false, pages = 1)
 
-        fallbackReason(changeSet, watermark) shouldBe null
+        queryOutcome(changeSet, watermark).fallbackReason shouldBe null
     }
 
     @Test
@@ -96,7 +96,7 @@ class KomgaServerOutcomeTest {
             failureReason = "timeout after 5000ms",
         )
 
-        fallbackReason(changeSet, watermark) shouldBe "timeout after 5000ms"
+        queryOutcome(changeSet, watermark).fallbackReason shouldBe "timeout after 5000ms"
     }
 
     @Test
@@ -109,13 +109,13 @@ class KomgaServerOutcomeTest {
             pages = 1,
         )
 
-        fallbackReason(changeSet, watermark) shouldBe "watermark ahead of Komga"
+        queryOutcome(changeSet, watermark).fallbackReason shouldBe "watermark ahead of Komga"
     }
 
     @Test
     fun `fallback reason defaults for an incomplete set without a reason`() {
         val changeSet = KomgaChangeSet(emptySet(), null, complete = false, empty = false, pages = 10)
 
-        fallbackReason(changeSet, watermark) shouldBe "incomplete result (page/time limit)"
+        queryOutcome(changeSet, watermark).fallbackReason shouldBe "incomplete result (page/time limit)"
     }
 }

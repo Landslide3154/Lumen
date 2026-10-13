@@ -3,12 +3,14 @@ package eu.kanade.tachiyomi.data.sync
 import eu.kanade.tachiyomi.data.backup.models.Backup
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
 import eu.kanade.tachiyomi.data.backup.models.BackupChapter
+import eu.kanade.tachiyomi.data.backup.models.BackupFeed
 import eu.kanade.tachiyomi.data.backup.models.BackupManga
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import tachiyomi.domain.category.model.Category
 
 class SyncDeltaTest {
 
@@ -78,5 +80,51 @@ class SyncDeltaTest {
 
         val empty = ProtoBuf.decodeFromByteArray(Backup.serializer(), ByteArray(0))
         assertTrue(empty.backupManga.isEmpty())
+    }
+
+    private fun feed(source: Long) = BackupFeed(source = source, global = true)
+
+    // An omitted section means "unchanged"; a feed-only response used to be dropped as empty.
+    @Test
+    fun `an omitted section is never a change but a differing one is`() {
+        val localFeed = feed(1)
+
+        assertFalse(emptyList<BackupFeed>().changedFrom(listOf(localFeed)))
+        assertFalse(listOf(localFeed).changedFrom(listOf(feed(1))))
+        assertTrue(listOf(feed(2)).changedFrom(listOf(localFeed)))
+        assertTrue(listOf(localFeed).changedFrom(emptyList()))
+    }
+
+    @Test
+    fun `a response carrying only feeds still has something to restore`() {
+        assertTrue(Backup().hasNothingToRestore())
+        assertFalse(Backup(backupFeeds = listOf(feed(1))).hasNothingToRestore())
+    }
+
+    private fun category(id: Long, name: String, uid: Long, order: Long = 0) =
+        Category(id = id, name = name, order = order, flags = 0, hidden = false, uid = uid)
+
+    @Test
+    fun `only categories the upload carried can be deleted remotely`() {
+        val uploaded = listOf(
+            BackupCategory(name = "Kept", uid = 1),
+            BackupCategory(name = "Gone", uid = 2),
+            BackupCategory(name = "Reading", uid = 9),
+        )
+        val remote = listOf(
+            BackupCategory(name = "Kept", uid = 1),
+            // same name, different uid: the other device's copy of it, so not a deletion
+            BackupCategory(name = "Reading", uid = 7),
+        )
+        val local = listOf(
+            category(id = 0, name = "", uid = 0),
+            category(id = 3, name = "Kept", uid = 1),
+            category(id = 4, name = "Gone", uid = 2),
+            category(id = 5, name = "Reading", uid = 9),
+            // created while the request was in flight: never uploaded, so never deleted
+            category(id = 6, name = "Just made", uid = 3),
+        )
+
+        assertEquals(listOf(4L), categoriesDeletedRemotely(local, uploaded, remote).map { it.id })
     }
 }

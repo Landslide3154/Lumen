@@ -266,7 +266,6 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
      */
     private fun commitKomgaIncrementalState() {
         val outcome = pendingKomga ?: return
-        if (!outcome.ranIncremental) return
 
         // 水位线只在整库更新时推进：局部更新时 Komga 上「本次范围之外」的变化还没被处理
         if (komgaFullLibraryRun && outcome.newWatermarks.isNotEmpty()) {

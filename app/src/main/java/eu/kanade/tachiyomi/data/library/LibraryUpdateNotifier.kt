@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -64,9 +63,6 @@ class LibraryUpdateNotifier(
     private val cancelIntent by lazy {
         NotificationReceiver.cancelLibraryUpdatePendingBroadcast(context)
     }
-
-    // KMK --> 通知不再放大图标（只保留左侧小图标）
-    // KMK <--
 
     /**
      * Cached progress notification to avoid creating a lot.

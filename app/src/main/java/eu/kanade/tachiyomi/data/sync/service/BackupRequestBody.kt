@@ -22,7 +22,7 @@ import java.io.IOException
  * a single encode (see [BackupRequestBodyTest]).
  *
  * [metaBytes] is the backup without its manga, which is also what tells an empty upload apart from
- * a delta that only carries categories.
+ * a delta that only carries categories; see [isEmpty].
  */
 internal class BackupRequestBody(
     private val backup: Backup,
@@ -31,6 +31,9 @@ internal class BackupRequestBody(
 ) : RequestBody() {
 
     val metaBytes: ByteArray = protoBuf.encodeToByteArray(Backup.serializer(), backup.copy(backupManga = emptyList()))
+
+    /** Nothing to upload: no manga and nothing in the other sections either. */
+    fun isEmpty(): Boolean = backup.backupManga.isEmpty() && metaBytes.isEmpty()
 
     override fun contentType(): MediaType? = "application/octet-stream".toMediaType()
 

@@ -367,8 +367,10 @@ buildscript {
 }
 
 // KMK -->
-// APK 文件名带上软件名、ABI 与版本号，例如 Lumen-arm64-v8a-1.14.1.04.apk
-// （AGP 8 的 VariantOutput 没有公开的 outputFileName 写入口，构建完统一改名）
+// APK 文件名带上软件名、ABI 与版本号，例如 Lumen-arm64-v8a-1.14.1.16.apk。
+// 只复制、不移动 AGP 自己的产物：AGP 的增量打包以上一次的 APK 为基准，把它移走再构建
+// 只会写出变化的 dex，得到一个装不上的残包（实测 68MB → 1.5MB）。
+// AGP 8 的 VariantOutput 没有公开的 outputFileName 写入口，所以只能在构建后补一份。
 tasks.matching { it.name.startsWith("assemble") }.configureEach {
     doLast {
         val variant = name.removePrefix("assemble").lowercase()
@@ -381,7 +383,7 @@ tasks.matching { it.name.startsWith("assemble") }.configureEach {
                     .removeSuffix("-$variant")
                     .takeIf { it.isNotEmpty() && it != "universal" }
                 val suffix = abi?.let { "-$it" }.orEmpty()
-                apk.renameTo(File(variantDir, "Lumen$suffix-$lumenVersionName.apk"))
+                apk.copyTo(File(variantDir, "Lumen$suffix-$lumenVersionName.apk"), overwrite = true)
             }
     }
 }

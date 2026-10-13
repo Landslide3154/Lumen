@@ -249,23 +249,21 @@ class SyncManager(
         )
 
         // KMK -->
-        val hasMangaChanges = filteredFavorites.isNotEmpty()
-        val hasCategoryChanges = categoriesDiffer(backup.backupCategories, remoteBackup.backupCategories)
-        // a v2 delta leaves out the sections nothing changed in; an absent section is not a change
-        val hasSourceChanges = newSyncData.backupSources != backup.backupSources
-        val hasPreferenceChanges = remoteBackup.backupPreferences.isNotEmpty() &&
-            remoteBackup.backupPreferences != backup.backupPreferences
-        val hasSourcePreferenceChanges = remoteBackup.backupSourcePreferences.isNotEmpty() &&
-            remoteBackup.backupSourcePreferences != backup.backupSourcePreferences
-        val hasExtensionRepoChanges = remoteBackup.backupExtensionStores.isNotEmpty() &&
-            extensionStoresDiffer(backup.backupExtensionStores, remoteBackup.backupExtensionStores)
-        val hasSavedSearchChanges = remoteBackup.backupSavedSearches.isNotEmpty() &&
-            remoteBackup.backupSavedSearches != backup.backupSavedSearches
+        // What is worth restoring. Sections without a version of their own are only a change when
+        // the response actually carries them, which is what [changedFrom] expresses.
+        val hasChanges = listOf(
+            filteredFavorites.isNotEmpty(),
+            categoriesDiffer(backup.backupCategories, remoteBackup.backupCategories),
+            newSyncData.backupSources != backup.backupSources,
+            remoteBackup.backupPreferences.changedFrom(backup.backupPreferences),
+            remoteBackup.backupSourcePreferences.changedFrom(backup.backupSourcePreferences),
+            remoteBackup.backupExtensionStores.isNotEmpty() &&
+                extensionStoresDiffer(backup.backupExtensionStores, remoteBackup.backupExtensionStores),
+            remoteBackup.backupSavedSearches.changedFrom(backup.backupSavedSearches),
+            remoteBackup.backupFeeds.changedFrom(backup.backupFeeds),
+        ).any { it }
 
-        if (!hasMangaChanges && !hasCategoryChanges && !hasSourceChanges &&
-            !hasPreferenceChanges && !hasSourcePreferenceChanges &&
-            !hasExtensionRepoChanges && !hasSavedSearchChanges
-        ) {
+        if (!hasChanges) {
             // it's a local sync, no need to restore data (just update remote data)
             finishWithSuccess(syncStart, "Sync completed successfully")
             return
@@ -274,12 +272,11 @@ class SyncManager(
         // The response carries the complete category list, so a category missing from it was
         // deleted on another device. Tombstone its uid so the deletion does not come back.
         if (syncOptions.categories) {
-            val mergedUids = newSyncData.backupCategories.map { it.uid }.toSet()
-            val mergedNames = newSyncData.backupCategories.map { it.name }.toSet()
-            val localCategories = getCategories.await().filterNot { it.id == 0L } // Exclude system category
-            val categoriesToDelete = localCategories.filter {
-                it.uid !in mergedUids && it.name !in mergedNames
-            }
+            val categoriesToDelete = categoriesDeletedRemotely(
+                local = getCategories.await(),
+                uploaded = backup.backupCategories,
+                remote = newSyncData.backupCategories,
+            )
             if (categoriesToDelete.isNotEmpty()) {
                 handler.await(inTransaction = true) {
                     categoriesToDelete.forEach { categoriesQueries.delete(it.id) }
@@ -338,14 +335,6 @@ class SyncManager(
         syncPreferences.lastPushedAt().set(syncStart)
         notifier.showSyncSuccess(message)
     }
-
-    private fun Backup.hasNothingToRestore() = backupManga.isEmpty() &&
-        backupCategories.isEmpty() &&
-        backupSources.isEmpty() &&
-        backupPreferences.isEmpty() &&
-        backupSourcePreferences.isEmpty() &&
-        backupExtensionStores.isEmpty() &&
-        backupSavedSearches.isEmpty()
     // KMK <--
 
     private fun writeSyncDataToCache(context: Context, backup: Backup): Uri? {

@@ -8,7 +8,6 @@ package eu.kanade.tachiyomi.data.connections.discord
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper

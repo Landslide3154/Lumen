@@ -29,7 +29,6 @@ class KomgaIncrementalFilter(
         val kept: List<LibraryManga>,
         val skipped: List<Pair<Manga, String>>,
         val newWatermarks: Map<String, String>,
-        val ranIncremental: Boolean,
         /** Komga 明确报告「有变化」的条目数（更新页显示用）。 */
         val changedCount: Int = 0,
         /** 查询失败/异常导致回退全量时的原因（更新页显示用），正常时为 null。 */
@@ -54,7 +53,6 @@ class KomgaIncrementalFilter(
             kept = candidates,
             skipped = emptyList(),
             newWatermarks = emptyMap(),
-            ranIncremental = true,
             fallbackReason = "exception: ${e::class.simpleName}: ${e.message}",
         )
     }
@@ -91,7 +89,6 @@ class KomgaIncrementalFilter(
             .toMap()
 
         val watermarks = KomgaWatermarks.decode(watermarksRaw)
-        val api = KomgaChangeSetClient(client, json)
         val outcomes = mutableMapOf<String, KomgaServerOutcome>()
         val fallbackReasons = mutableListOf<String>()
         var pagesTotal = 0
@@ -145,7 +142,6 @@ class KomgaIncrementalFilter(
             kept = kept,
             skipped = skipped,
             newWatermarks = decision.newWatermarks,
-            ranIncremental = true,
             changedCount = decision.changedMangaIds.size,
             fallbackReason = fallbackReasons.takeIf { it.isNotEmpty() }?.joinToString("; "),
             summary = context.stringResource(

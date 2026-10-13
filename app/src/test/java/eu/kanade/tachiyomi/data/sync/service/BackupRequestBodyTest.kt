@@ -10,6 +10,7 @@ import okio.GzipSource
 import okio.buffer
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -68,8 +69,13 @@ class BackupRequestBodyTest {
 
     @Test
     fun `an empty backup is empty`() {
-        assertTrue(BackupRequestBody(Backup(), ProtoBuf).metaBytes.isEmpty())
+        assertTrue(BackupRequestBody(Backup(), ProtoBuf).isEmpty())
         assertEquals(0, bytesOf(Backup()).size)
+    }
+
+    @Test
+    fun `a delta with only a manga is not empty`() {
+        assertFalse(BackupRequestBody(Backup(backupManga = listOf(manga("/manga/a"))), ProtoBuf).isEmpty())
     }
 
     @Test

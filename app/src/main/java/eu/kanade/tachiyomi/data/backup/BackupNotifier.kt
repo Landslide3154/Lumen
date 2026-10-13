@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.data.backup
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.hippo.unifile.UniFile

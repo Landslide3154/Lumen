@@ -17,4 +17,6 @@
     <string name="pref_library_update_incremental_note">增量更新只拉取 Komga 上有变化的作品。开启「自动刷新作品信息」时，作品信息的请求不受本功能影响；若 Komga 库放在网络盘上、加书后未被识别为变化，可临时切到「全量」更新一次。</string>
     <string name="updates_komga_fallback_info">上次增量查询未成功（%1$s），本次按全量更新</string>
     <string name="updates_komga_summary">增量更新：%1$d 台服务器 · 查询 %2$d 页 · %3$d 部有变化 · 跳过 %4$d 部</string>
+    <!-- KMR 覆盖了原 SYMR 的条目，中文译文跟着搬过来 -->
+    <string name="redundant_extension_message">此插件已废弃，将不会在此版本的 Lumen 上工作。</string>
 </resources>

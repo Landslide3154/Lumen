@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.ui.reader
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -56,10 +55,6 @@ class SaveImageNotifier(private val context: Context) {
         context.cancelNotification(notificationId)
     }
 
-    // KMK -->
-    // 通知不再放大图标（只保留左侧小图标）
-    // KMK <--
-
     /**
      * Called on error while downloading image.
      * @param error string containing error information.
@@ -67,8 +62,6 @@ class SaveImageNotifier(private val context: Context) {
     fun onError(error: String?) {
         // Create notification
         with(notificationBuilder) {
-            // KMK -->
-            // KMK <--
             setContentTitle(context.stringResource(MR.strings.download_notifier_title_error))
             setContentText(error ?: context.stringResource(MR.strings.unknown_error))
             setSmallIcon(android.R.drawable.ic_menu_report_image)
