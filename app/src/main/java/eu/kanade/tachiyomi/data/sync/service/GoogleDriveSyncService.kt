@@ -30,6 +30,7 @@ import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import tachiyomi.i18n.sy.SYMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -128,7 +129,7 @@ class GoogleDriveSyncService(context: Context, json: Json, syncPreferences: Sync
             }
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, throwable = e) { "Error downloading file" }
-            throw Exception("Failed to download sync data: ${e.message}", e)
+            throw Exception(context.stringResource(KMR.strings.sync_error_download, e.message.orEmpty()), e)
         }
     }
 
@@ -146,7 +147,7 @@ class GoogleDriveSyncService(context: Context, json: Json, syncPreferences: Sync
         val cacheFile = context.cacheDir.resolve(remoteFileName)
         try {
             withIOContext {
-                val body = BackupRequestBody(backup, protoBuf, gzip = true)
+                val body = BackupRequestBody(backup, protoBuf, gzip = true, outOfMemoryMessage = context.stringResource(KMR.strings.sync_error_out_of_memory))
                 if (body.isEmpty()) {
                     throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
                 }
@@ -344,18 +345,18 @@ class GoogleDriveService(private val context: Context) {
                 this@GoogleDriveService.logcat(LogPriority.ERROR, throwable = e) {
                     "Refresh token is invalid, prompt user to sign in again"
                 }
-                throw e.message?.let { Exception(it, e) } ?: Exception("Unknown error", e)
+                throw e.message?.let { Exception(it, e) } ?: Exception(context.stringResource(KMR.strings.sync_error_unknown), e)
             } else {
                 // Token refresh failed; handle this situation
                 this@GoogleDriveService.logcat(LogPriority.ERROR) { "Failed to refresh access token ${e.message}" }
                 this@GoogleDriveService.logcat(LogPriority.ERROR) { "Google Drive sync will be disabled" }
-                throw e.message?.let { Exception(it, e) } ?: Exception("Unknown error", e)
+                throw e.message?.let { Exception(it, e) } ?: Exception(context.stringResource(KMR.strings.sync_error_unknown), e)
             }
         } catch (e: IOException) {
             // Token refresh failed; handle this situation
             this@GoogleDriveService.logcat(LogPriority.ERROR, throwable = e) { "Failed to refresh access token" }
             this@GoogleDriveService.logcat(LogPriority.ERROR) { "Google Drive sync will be disabled" }
-            throw e.message?.let { Exception(it, e) } ?: Exception("Unknown error", e)
+            throw e.message?.let { Exception(it, e) } ?: Exception(context.stringResource(KMR.strings.sync_error_unknown), e)
         }
     }
 
@@ -437,7 +438,7 @@ class GoogleDriveService(private val context: Context) {
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, throwable = e) { "Failed to handle authorization code" }
             activity.runOnUiThread {
-                onFailure(e.localizedMessage ?: "Unknown error")
+                onFailure(e.localizedMessage ?: context.stringResource(KMR.strings.sync_error_unknown))
             }
         }
     }

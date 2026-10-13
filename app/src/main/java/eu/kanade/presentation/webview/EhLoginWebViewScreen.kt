@@ -40,6 +40,7 @@ import eu.kanade.presentation.components.AppBar
 import eu.kanade.tachiyomi.util.system.isDebugBuildType
 import eu.kanade.tachiyomi.util.system.setDefaultSettings
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.components.material.Button
 import tachiyomi.presentation.core.components.material.Scaffold
@@ -68,7 +69,7 @@ fun EhLoginWebViewScreen(
         topBar = {
             Box {
                 AppBar(
-                    title = "ExHentai login",
+                    title = stringResource(KMR.strings.eh_login_title),
                     navigateUp = onUp,
                     navigationIcon = Icons.Outlined.Close,
                 )

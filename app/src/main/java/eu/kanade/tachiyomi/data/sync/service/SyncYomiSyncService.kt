@@ -26,6 +26,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.apache.http.HttpStatus
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.concurrent.TimeUnit
@@ -106,7 +107,7 @@ class SyncYomiSyncService(
             return SyncResult(null, changed = false, protocolV2 = v2)
         } catch (e: OutOfMemoryError) {
             logcat(LogPriority.ERROR) { "Out of memory while syncing" }
-            notifier.showSyncError("Not enough memory to sync this library")
+            notifier.showSyncError(context.stringResource(KMR.strings.sync_error_out_of_memory))
             reportSyncEvent(SyncEventStatus.SYNC_ERROR, "OutOfMemoryError")
             return SyncResult(null, changed = false, protocolV2 = v2)
         }
@@ -184,7 +185,7 @@ class SyncYomiSyncService(
                 val responseBody = resp.body.string()
                 logcat(LogPriority.ERROR) { "SyncError (${resp.code}): $responseBody" }
                 reportSyncEvent(SyncEventStatus.SYNC_FAILED, "Server answered ${resp.code}")
-                throw SyncYomiException("Failed to sync: ${resp.code} $responseBody")
+                throw SyncYomiException(context.stringResource(KMR.strings.sync_error_merge, "${resp.code} $responseBody"))
             }
 
             remote = protoBuf.decodeFromByteArray(Backup.serializer(), resp.body.bytes())
@@ -242,7 +243,7 @@ class SyncYomiSyncService(
             // An auth failure answers here too, so keep the body in the message: it is the only
             // clue the user gets when the API key is wrong.
             val body = response.use { it.body.string().take(200) }
-            throw SyncYomiException("Failed to probe server capabilities: $code $body")
+            throw SyncYomiException(context.stringResource(KMR.strings.sync_error_probe, "$code $body"))
         }
         response.close()
         val supported = code == HttpStatus.SC_OK
@@ -310,9 +311,9 @@ class SyncYomiSyncService(
             }
         } else {
             val responseBody = response.body.string()
-            notifier.showSyncError("Failed to download sync data: $responseBody")
+            notifier.showSyncError(context.stringResource(KMR.strings.sync_error_download, responseBody))
             logcat(LogPriority.ERROR) { "SyncError: $responseBody" }
-            throw SyncYomiException("Failed to download sync data: $responseBody")
+            throw SyncYomiException(context.stringResource(KMR.strings.sync_error_download, responseBody))
         }
     }
 
@@ -339,7 +340,7 @@ class SyncYomiSyncService(
         val headers = headersBuilder.build()
 
         // KMK -->
-        val body = BackupRequestBody(backup, protoBuf)
+        val body = BackupRequestBody(backup, protoBuf, outOfMemoryMessage = context.stringResource(KMR.strings.sync_error_out_of_memory))
         // KMK <--
         if (body.isEmpty()) {
             throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
@@ -367,7 +368,7 @@ class SyncYomiSyncService(
                     return false
                 } else {
                     val responseBody = response.body.string()
-                    notifier.showSyncError("Failed to upload sync data: $responseBody")
+                    notifier.showSyncError(context.stringResource(KMR.strings.sync_error_upload, responseBody))
                     logcat(LogPriority.ERROR) { "SyncError: $responseBody" }
                     return false
                 }

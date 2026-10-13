@@ -30,6 +30,8 @@ import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import mihon.core.common.FeatureFlags
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
+import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -45,11 +47,11 @@ class DebugInfoScreen : Screen() {
             itemsProvider = {
                 listOf(
                     Preference.PreferenceItem.TextPreference(
-                        title = WorkerInfoScreen.TITLE,
+                        title = stringResource(KMR.strings.debug_worker_info),
                         onClick = { navigator.push(WorkerInfoScreen()) },
                     ),
                     Preference.PreferenceItem.TextPreference(
-                        title = BackupSchemaScreen.TITLE,
+                        title = stringResource(KMR.strings.debug_backup_schema),
                         onClick = { navigator.push(BackupSchemaScreen()) },
                     ),
                     getAppInfoGroup(),
@@ -68,18 +70,18 @@ class DebugInfoScreen : Screen() {
         val installationId by installationIdPref.collectAsState()
 
         return Preference.PreferenceGroup(
-            title = "App info",
+            title = stringResource(MR.strings.ext_app_info),
             preferenceItems = persistentListOf(
                 Preference.PreferenceItem.TextPreference(
-                    title = "Version",
+                    title = stringResource(MR.strings.version),
                     subtitle = AboutScreen.getVersionName(false),
                 ),
                 Preference.PreferenceItem.TextPreference(
-                    title = "Build time",
+                    title = stringResource(KMR.strings.debug_build_time),
                     subtitle = AboutScreen.getFormattedBuildTime(),
                 ),
                 Preference.PreferenceItem.TextPreference(
-                    title = "Installation ID",
+                    title = stringResource(KMR.strings.debug_installation_id),
                     subtitle = installationId,
                     widget = {
                         IconButton(
@@ -102,7 +104,7 @@ class DebugInfoScreen : Screen() {
                 ),
                 getProfileVerifierPreference(),
                 Preference.PreferenceItem.TextPreference(
-                    title = "WebView version",
+                    title = stringResource(KMR.strings.debug_webview_version),
                     subtitle = getWebViewVersion(),
                 ),
             ),
@@ -135,16 +137,18 @@ class DebugInfoScreen : Screen() {
             }
         }
         return Preference.PreferenceItem.TextPreference(
-            title = "Profile compilation status",
+            title = stringResource(KMR.strings.debug_profile_compilation_status),
             subtitle = status,
         )
     }
 
+    // KMK --> 标题改成资源后需要 @Composable（调用点在 Content 里）
+    @Composable
     private fun getDeviceInfoGroup(): Preference.PreferenceGroup {
         val items = persistentListOf<Preference.PreferenceItem<out Any, out Any>>().mutate {
             it.add(
                 Preference.PreferenceItem.TextPreference(
-                    title = "Model",
+                    title = stringResource(KMR.strings.debug_model),
                     subtitle = "${Build.MANUFACTURER} ${Build.MODEL} (${Build.DEVICE})",
                 ),
             )
@@ -152,14 +156,14 @@ class DebugInfoScreen : Screen() {
             if (DeviceUtil.oneUiVersion != null) {
                 it.add(
                     Preference.PreferenceItem.TextPreference(
-                        title = "OneUI version",
+                        title = stringResource(KMR.strings.debug_oneui_version),
                         subtitle = "${DeviceUtil.oneUiVersion}",
                     ),
                 )
             } else if (DeviceUtil.miuiMajorVersion != null) {
                 it.add(
                     Preference.PreferenceItem.TextPreference(
-                        title = "MIUI version",
+                        title = stringResource(KMR.strings.debug_miui_version),
                         subtitle = "${DeviceUtil.miuiMajorVersion}",
                     ),
                 )
@@ -174,14 +178,14 @@ class DebugInfoScreen : Screen() {
             }
             it.add(
                 Preference.PreferenceItem.TextPreference(
-                    title = "Android version",
+                    title = stringResource(KMR.strings.debug_android_version),
                     subtitle = "$androidVersion (${Build.DISPLAY})",
                 ),
             )
         }
 
         return Preference.PreferenceGroup(
-            title = "Device info",
+            title = stringResource(KMR.strings.debug_device_info),
             preferenceItems = items,
         )
     }

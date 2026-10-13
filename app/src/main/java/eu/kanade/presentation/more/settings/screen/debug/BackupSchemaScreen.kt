@@ -22,26 +22,26 @@ import eu.kanade.tachiyomi.util.system.copyToClipboard
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.serialization.protobuf.schema.ProtoBufSchemaGenerator
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
 
 class BackupSchemaScreen : Screen() {
 
-    companion object {
-        const val TITLE = "Backup file schema"
-    }
-
     @Composable
     override fun Content() {
         val context = LocalContext.current
         val navigator = LocalNavigator.currentOrThrow
+        // KMK --> 标题改为可翻译文案（原来硬编码英文常量）
+        val title = stringResource(KMR.strings.debug_backup_schema)
+        // KMK <--
 
         val schema = remember { ProtoBufSchemaGenerator.generateSchemaText(Backup.serializer().descriptor) }
 
         Scaffold(
             topBar = {
                 AppBar(
-                    title = TITLE,
+                    title = title,
                     navigateUp = navigator::pop,
                     actions = {
                         AppBarActions(
@@ -50,7 +50,7 @@ class BackupSchemaScreen : Screen() {
                                     title = stringResource(MR.strings.action_copy_to_clipboard),
                                     icon = Icons.Default.ContentCopy,
                                     onClick = {
-                                        context.copyToClipboard(TITLE, schema)
+                                        context.copyToClipboard(title, schema)
                                     },
                                 ),
                             ),

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Lumen 新增字符串的中文覆盖。
-  英文原文在 i18n-kmk 的 base（规范来源）；这里只覆盖 app 模块，避免手改
-  i18n* 模块的非 base 语言文件（那些由 Weblate 拥有）。
-  资源名必须与 KMR 的 key 完全一致。
+  Lumen 的中文覆盖层。
+  ① Lumen 新增字符串（英文原文在 i18n-kmk 的 base，规范来源）；
+  ② 上游三套语言模块（i18n / i18n-sy / i18n-kmk）的非 base 语言文件由 Weblate 拥有，
+     不改它们，缺中文的条目统一在这里按资源名覆盖（同名条目 app 模块优先，实测生效）。
+  资源名必须与 KMR / MR / SYMR 的 key 完全一致。
 -->
 <resources>
+    <!-- ① Lumen 新增：Komga 增量更新 -->
     <string name="skipped_reason_komga_unchanged">Komga 上无变化</string>
     <string name="skipped_reason_komga_unavailable">Komga 暂时不可用</string>
     <string name="pref_library_update_mode">更新方式</string>
@@ -19,9 +21,63 @@
     <string name="updates_komga_summary">增量更新：%1$d 台服务器 · 查询 %2$d 页 · %3$d 部有变化 · 跳过 %4$d 部</string>
     <!-- KMR 覆盖了原 SYMR 的条目，中文译文跟着搬过来 -->
     <string name="redundant_extension_message">此插件已废弃，将不会在此版本的 Lumen 上工作。</string>
-    <!-- Lumen 同步协议状态 -->
+
+    <!-- ① Lumen 新增：同步协议状态 -->
     <string name="pref_sync_protocol_v2">同步协议：v2</string>
     <string name="pref_sync_protocol_v1">同步协议：v1（老服务端）</string>
     <string name="pref_sync_protocol_unknown">同步协议：尚未探测</string>
     <string name="pref_sync_protocol_summary">v2 只传变化、并且会同步删除；v1 两样都做不到。点一下可在下次同步时重新探测服务器。</string>
+
+    <!-- ① Lumen 新增：同步提示（通知与错误文案） -->
+    <string name="sync_success">同步完成</string>
+    <string name="sync_success_uploaded">已更新服务器数据</string>
+    <string name="sync_error_no_remote_data">服务器上没有数据</string>
+    <string name="sync_error_apply_failed">同步数据写入失败，下次会整库重试</string>
+    <string name="sync_error_out_of_memory">内存不足，无法同步书库</string>
+    <string name="sync_error_probe">探测服务器协议失败：%1$s</string>
+    <string name="sync_error_merge">同步失败：%1$s</string>
+    <string name="sync_error_download">下载同步数据失败：%1$s</string>
+    <string name="sync_error_upload">上传同步数据失败：%1$s</string>
+    <string name="sync_error_unknown">未知错误</string>
+    <string name="sync_error_webdav_url">WebDAV 地址无效，请检查设置</string>
+    <string name="sync_error_webdav_credentials">WebDAV 用户名或密码不能为空</string>
+    <string name="sync_error_webdav_folder">创建 WebDAV 目录失败：%1$s</string>
+    <string name="sync_error_webdav_conflict">检测到同步冲突：可能另一台设备刚更新过远端备份。请重试同步，或检查 WebDAV 目录。</string>
+
+    <!-- ② 上游语言模块缺中文的条目（原先在中文界面显示英文） -->
+    <string name="action_web_view">在 WebView 中打开</string>
+    <string name="update_1hour">每 1 小时</string>
+    <string name="update_3hour">每 3 小时</string>
+    <string name="ext_installer_packageinstaller">系统安装程序</string>
+    <string name="ext_installer_private">私有安装程序</string>
+    <string name="updated_version">已更新到 v%1$s</string>
+    <!-- ext_installer_shizuku 保留产品名 Shizuku，不翻译 -->
+    <string name="pref_force_horz_seekbar">强制使用横向进度条</string>
+    <string name="pref_force_horz_seekbar_summary">彻底不用竖向进度条，一律使用横向</string>
+    <string name="pref_left_handed_vertical_seekbar">左手模式竖向进度条</string>
+    <string name="pref_left_handed_vertical_seekbar_summary">切换竖向进度条显示在哪一侧</string>
+    <string name="pref_show_vert_seekbar_landscape">横屏时显示竖向进度条</string>
+    <string name="pref_show_vert_seekbar_landscape_summary">横屏时启用竖向进度条</string>
+
+    <!-- ① Lumen 新增：上游硬编码文案改成资源后的中文（EH 设置、调试信息页） -->
+    <string name="eh_language_original">原文</string>
+    <string name="eh_language_rewrite">重写</string>
+    <string name="eh_category_header">分类</string>
+    <string name="eh_category_enabled">已启用</string>
+    <string name="eh_login_title">ExHentai 登录</string>
+    <string name="pref_dont_kill_my_app">别杀我的应用！</string>
+    <string name="debug_build_time">构建时间</string>
+    <string name="debug_installation_id">安装 ID</string>
+    <string name="debug_webview_version">WebView 版本</string>
+    <string name="debug_profile_compilation_status">配置文件编译状态</string>
+    <string name="debug_model">机型</string>
+    <string name="debug_oneui_version">OneUI 版本</string>
+    <string name="debug_miui_version">MIUI 版本</string>
+    <string name="debug_android_version">Android 版本</string>
+    <string name="debug_device_info">设备信息</string>
+    <string name="debug_worker_info">后台任务</string>
+    <string name="debug_worker_enqueued">已排队</string>
+    <string name="debug_worker_finished">已完成</string>
+    <string name="debug_worker_running">运行中</string>
+    <string name="debug_backup_schema">备份文件结构</string>
 </resources>

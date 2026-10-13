@@ -258,4 +258,42 @@
     <string name="pref_sync_protocol_v1">Sync protocol: v1 (old server)</string>
     <string name="pref_sync_protocol_unknown">Sync protocol: not probed yet</string>
     <string name="pref_sync_protocol_summary">v2 uploads only what changed and syncs deletions; v1 does neither. Tap to probe the server again on the next sync.</string>
+
+    <!-- Lumen 同步提示（通知与错误文案） -->
+    <string name="sync_success">Sync completed successfully</string>
+    <string name="sync_success_uploaded">Updated remote data successfully</string>
+    <string name="sync_error_no_remote_data">No data found on remote server.</string>
+    <string name="sync_error_apply_failed">Failed to apply synced data; will retry with a full sync</string>
+    <string name="sync_error_out_of_memory">Not enough memory to sync this library</string>
+    <string name="sync_error_probe">Failed to probe server capabilities: %1$s</string>
+    <string name="sync_error_merge">Failed to sync: %1$s</string>
+    <string name="sync_error_download">Failed to download sync data: %1$s</string>
+    <string name="sync_error_upload">Failed to upload sync data: %1$s</string>
+    <string name="sync_error_unknown">Unknown error</string>
+    <string name="sync_error_webdav_url">Invalid WebDAV URL. Please check your settings.</string>
+    <string name="sync_error_webdav_credentials">Username or password cannot be empty.</string>
+    <string name="sync_error_webdav_folder">Failed to create WebDAV folder: %1$s</string>
+    <string name="sync_error_webdav_conflict">Sync conflict detected. Another device may have updated the remote backup. Please retry syncing or check your WebDAV folder.</string>
+
+    <!-- Lumen 中文化：上游代码里硬编码的界面文案（改为资源后可翻译） -->
+    <string name="eh_language_original">Original</string>
+    <string name="eh_language_rewrite">Rewrite</string>
+    <string name="eh_category_header">Category</string>
+    <string name="eh_category_enabled">Enabled</string>
+    <string name="eh_login_title">ExHentai login</string>
+    <string name="pref_dont_kill_my_app">Don\'t kill my app!</string>
+    <string name="debug_build_time">Build time</string>
+    <string name="debug_installation_id">Installation ID</string>
+    <string name="debug_webview_version">WebView version</string>
+    <string name="debug_profile_compilation_status">Profile compilation status</string>
+    <string name="debug_model">Model</string>
+    <string name="debug_oneui_version">OneUI version</string>
+    <string name="debug_miui_version">MIUI version</string>
+    <string name="debug_android_version">Android version</string>
+    <string name="debug_device_info">Device info</string>
+    <string name="debug_worker_info">Worker info</string>
+    <string name="debug_worker_enqueued">Enqueued</string>
+    <string name="debug_worker_finished">Finished</string>
+    <string name="debug_worker_running">Running</string>
+    <string name="debug_backup_schema">Backup file schema</string>
 </resources>

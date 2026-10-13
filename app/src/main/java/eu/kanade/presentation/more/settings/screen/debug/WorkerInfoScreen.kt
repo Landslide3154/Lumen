@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.plus
@@ -48,13 +49,10 @@ import java.time.ZoneId
 
 class WorkerInfoScreen : Screen() {
 
-    companion object {
-        const val TITLE = "Worker info"
-    }
-
     @Composable
     override fun Content() {
         val context = LocalContext.current
+        val title = stringResource(KMR.strings.debug_worker_info)
         val navigator = LocalNavigator.currentOrThrow
 
         val screenModel = rememberScreenModel { Model(context) }
@@ -65,7 +63,7 @@ class WorkerInfoScreen : Screen() {
         Scaffold(
             topBar = {
                 AppBar(
-                    title = TITLE,
+                    title = title,
                     navigateUp = navigator::pop,
                     actions = {
                         AppBarActions(
@@ -74,7 +72,7 @@ class WorkerInfoScreen : Screen() {
                                     title = stringResource(MR.strings.action_copy_to_clipboard),
                                     icon = Icons.Default.ContentCopy,
                                     onClick = {
-                                        context.copyToClipboard(TITLE, enqueued + finished + running)
+                                        context.copyToClipboard(title, enqueued + finished + running)
                                     },
                                 ),
                             ),
@@ -88,13 +86,13 @@ class WorkerInfoScreen : Screen() {
                 contentPadding = contentPadding + PaddingValues(horizontal = 16.dp),
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
             ) {
-                item { SectionTitle(title = "Enqueued") }
+                item { SectionTitle(title = stringResource(KMR.strings.debug_worker_enqueued)) }
                 item { SectionText(text = enqueued) }
 
-                item { SectionTitle(title = "Finished") }
+                item { SectionTitle(title = stringResource(KMR.strings.debug_worker_finished)) }
                 item { SectionText(text = finished) }
 
-                item { SectionTitle(title = "Running") }
+                item { SectionTitle(title = stringResource(KMR.strings.debug_worker_running)) }
                 item { SectionText(text = running) }
             }
         }

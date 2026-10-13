@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.data.sync
 
 import android.content.Context
 import android.net.Uri
+import dev.icerock.moko.resources.StringResource
 import eu.kanade.domain.sync.SyncPreferences
 import eu.kanade.tachiyomi.data.backup.create.BackupCreator
 import eu.kanade.tachiyomi.data.backup.create.BackupOptions
@@ -23,12 +24,14 @@ import logcat.LogPriority
 import logcat.logcat
 import okio.buffer
 import okio.sink
+import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.data.Chapters
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.data.manga.MangaMapper.mapManga
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.manga.model.Manga
+import tachiyomi.i18n.kmk.KMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
@@ -199,7 +202,7 @@ class SyncManager(
         if (remoteBackup === syncData.backup || (result.protocolV2 && !result.changed)) {
             // nothing new on the remote; a v2 server says so explicitly
             logcat(LogPriority.DEBUG) { "Skip restore, nothing new on the remote" }
-            finishWithSuccess(syncStart, "Sync completed successfully")
+            finishWithSuccess(syncStart, KMR.strings.sync_success)
             return
         }
 
@@ -209,14 +212,14 @@ class SyncManager(
                 remoteBackup.backupCategories.isEmpty() &&
                 remoteBackup.backupSources.isEmpty()
             ) {
-                notifier.showSyncError("No data found on remote server.")
+                notifier.showSyncError(context.stringResource(KMR.strings.sync_error_no_remote_data))
                 return
             }
 
             // Check if it's first sync based on lastSyncTimestamp
             if (syncPreferences.lastSyncTimestamp().get() == 0L && databaseManga.isNotEmpty()) {
                 // It's first sync no need to restore data. (just update remote data)
-                finishWithSuccess(syncStart, "Updated remote data successfully")
+                finishWithSuccess(syncStart, KMR.strings.sync_success_uploaded)
                 return
             }
         }
@@ -265,7 +268,7 @@ class SyncManager(
 
         if (!hasChanges) {
             // it's a local sync, no need to restore data (just update remote data)
-            finishWithSuccess(syncStart, "Sync completed successfully")
+            finishWithSuccess(syncStart, KMR.strings.sync_success)
             return
         }
 
@@ -287,7 +290,7 @@ class SyncManager(
 
         if (newSyncData.hasNothingToRestore()) {
             // the category deletions above were the whole change; an empty backup cannot be decoded
-            finishWithSuccess(syncStart, "Sync completed successfully")
+            finishWithSuccess(syncStart, KMR.strings.sync_success)
             return
         }
         // KMK <--
@@ -319,7 +322,7 @@ class SyncManager(
                 // The cursor already advanced past the data that failed to apply, so ask the
                 // server for everything on the next run to self-heal.
                 syncPreferences.fullSyncRequested().set(true)
-                notifier.showSyncError("Failed to apply synced data; will retry with a full sync")
+                notifier.showSyncError(context.stringResource(KMR.strings.sync_error_apply_failed))
                 logcat(LogPriority.ERROR) { "Sync restore failed; requesting full sync on next run" }
             }
             // KMK <--
@@ -329,11 +332,11 @@ class SyncManager(
     }
 
     // KMK -->
-    private fun finishWithSuccess(syncStart: Long, message: String) {
+    private fun finishWithSuccess(syncStart: Long, messageRes: StringResource) {
         syncPreferences.lastSyncTimestamp().set(Date().time)
         // everything modified before this instant reached the server; the next delta starts here
         syncPreferences.lastPushedAt().set(syncStart)
-        notifier.showSyncSuccess(message)
+        notifier.showSyncSuccess(context.stringResource(messageRes))
     }
     // KMK <--
 

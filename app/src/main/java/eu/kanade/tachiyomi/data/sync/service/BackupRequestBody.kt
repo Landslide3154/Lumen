@@ -28,6 +28,8 @@ internal class BackupRequestBody(
     private val backup: Backup,
     private val protoBuf: ProtoBuf,
     private val gzip: Boolean = false,
+    /** Shown as the sync error when the library is too large to encode; callers pass a localized one. */
+    private val outOfMemoryMessage: String = DEFAULT_OUT_OF_MEMORY_MESSAGE,
 ) : RequestBody() {
 
     val metaBytes: ByteArray = protoBuf.encodeToByteArray(Backup.serializer(), backup.copy(backupManga = emptyList()))
@@ -47,7 +49,7 @@ internal class BackupRequestBody(
                 writeRecords(sink)
             }
         } catch (e: OutOfMemoryError) {
-            throw IOException("Not enough memory to sync this library", e)
+            throw IOException(outOfMemoryMessage, e)
         }
     }
 
@@ -63,4 +65,9 @@ internal class BackupRequestBody(
     private class MangaChunk(
         @ProtoNumber(1) val manga: BackupManga,
     )
+
+    internal companion object {
+        /** Only used when a caller has no context to localize with (tests). */
+        const val DEFAULT_OUT_OF_MEMORY_MESSAGE = "Not enough memory to sync this library"
+    }
 }

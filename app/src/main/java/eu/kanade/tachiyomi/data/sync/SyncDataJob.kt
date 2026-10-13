@@ -21,7 +21,9 @@ import eu.kanade.tachiyomi.util.system.setForegroundSafely
 import eu.kanade.tachiyomi.util.system.workManager
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
+import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
+import tachiyomi.i18n.kmk.KMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.concurrent.TimeUnit
@@ -58,7 +60,7 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
             // KMK -->
         } catch (e: OutOfMemoryError) {
             logcat(LogPriority.ERROR, e)
-            notifier.showSyncError("Not enough memory to sync this library")
+            notifier.showSyncError(context.stringResource(KMR.strings.sync_error_out_of_memory))
             Result.success() // try again next time
             // KMK <--
         } catch (e: Exception) {

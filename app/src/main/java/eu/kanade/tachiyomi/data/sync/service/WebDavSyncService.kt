@@ -23,6 +23,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.apache.http.HttpStatus
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.concurrent.TimeUnit
@@ -59,11 +60,11 @@ class WebDavSyncService(
 
     private fun validateSettings(): Boolean {
         if (url.isEmpty() || !url.startsWith("http")) {
-            notifier.showSyncError("Invalid WebDAV URL. Please check your settings.")
+            notifier.showSyncError(context.stringResource(KMR.strings.sync_error_webdav_url))
             return false
         }
         if (username.isBlank() || password.isBlank()) {
-            notifier.showSyncError("Username or password cannot be empty.")
+            notifier.showSyncError(context.stringResource(KMR.strings.sync_error_webdav_credentials))
             return false
         }
         return true
@@ -80,7 +81,7 @@ class WebDavSyncService(
         for (part in folderParts) {
             currentPath = "$currentPath/$part"
             if (!createSingleFolder(currentPath)) {
-                throw WebDavException("Failed to create folder: $currentPath")
+                throw WebDavException(context.stringResource(KMR.strings.sync_error_webdav_folder, currentPath))
             }
         }
     }
@@ -149,7 +150,7 @@ class WebDavSyncService(
                     }
                 } else {
                     val body = response.body.string()
-                    throw WebDavException("Failed to download: $body")
+                    throw WebDavException(context.stringResource(KMR.strings.sync_error_download, body))
                 }
             }
         }
@@ -178,14 +179,13 @@ class WebDavSyncService(
                 xLogI("WebDAV sync completed")
             }
             response.code == HttpStatus.SC_PRECONDITION_FAILED -> {
-                val message = "Sync conflict detected. Another device may have updated the remote backup. " +
-                    "Please retry syncing or check your WebDAV folder."
+                val message = context.stringResource(KMR.strings.sync_error_webdav_conflict)
                 xLogW(message)
                 notifier.showSyncError(message)
             }
             else -> {
                 val bodyStr = response.body.string()
-                throw WebDavException("Upload failed: $bodyStr")
+                throw WebDavException(context.stringResource(KMR.strings.sync_error_upload, bodyStr))
             }
         }
     }
