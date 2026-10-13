@@ -55,6 +55,7 @@ import eu.kanade.tachiyomi.data.coil.TachiyomiImageDecoder
 import eu.kanade.tachiyomi.data.connections.discord.DiscordRPCService
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.data.sync.SyncDataJob
+import eu.kanade.tachiyomi.data.sync.SyncTrigger
 import eu.kanade.tachiyomi.di.AppModule
 import eu.kanade.tachiyomi.di.PreferenceModule
 import eu.kanade.tachiyomi.di.SYPreferenceModule
@@ -229,7 +230,7 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
         val syncPreferences: SyncPreferences = Injekt.get()
         val syncTriggerOpt = syncPreferences.getSyncTriggerOptions()
         if (syncPreferences.isSyncEnabled() && syncTriggerOpt.syncOnAppStart) {
-            SyncDataJob.startNow(this@App)
+            SyncDataJob.startNow(this@App, trigger = SyncTrigger.APP_START)
         }
 
         initializeMigrator()
@@ -305,7 +306,7 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
         val syncPreferences: SyncPreferences = Injekt.get()
         val syncTriggerOpt = syncPreferences.getSyncTriggerOptions()
         if (syncPreferences.isSyncEnabled() && syncTriggerOpt.syncOnAppResume) {
-            SyncDataJob.startNow(this@App)
+            SyncDataJob.startNow(this@App, trigger = SyncTrigger.APP_RESUME)
         }
 
         // AM (DISCORD) -->

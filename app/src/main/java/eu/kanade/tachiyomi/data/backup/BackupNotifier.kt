@@ -9,6 +9,9 @@ import eu.kanade.tachiyomi.core.security.SecurityPreferences
 import eu.kanade.tachiyomi.data.BackupRestoreStatus
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
+import eu.kanade.tachiyomi.data.sync.SyncSectionCount
+import eu.kanade.tachiyomi.data.sync.SyncText
+import eu.kanade.tachiyomi.data.sync.SyncTrigger
 import eu.kanade.tachiyomi.util.storage.getUriCompat
 import eu.kanade.tachiyomi.util.system.cancelNotification
 import eu.kanade.tachiyomi.util.system.notificationBuilder
@@ -17,6 +20,7 @@ import tachiyomi.core.common.i18n.pluralStringResource
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.storage.displayablePath
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -156,33 +160,41 @@ class BackupNotifier(private val context: Context) {
         path: String?,
         file: String?,
         sync: Boolean,
+        // KMK -->
+        /** What the applied sync data carried, for the 「写进本机」 wording. */
+        written: List<SyncSectionCount> = emptyList(),
+        /** Why the sync ran, so both completion notifications name the same trigger. */
+        trigger: SyncTrigger = SyncTrigger.UNKNOWN,
+        // KMK <--
     ) {
-        val contentTitle = if (sync) {
-            context.stringResource(MR.strings.library_sync_complete)
-        } else {
-            context.stringResource(MR.strings.restore_completed)
-        }
-
         context.cancelNotification(Notifications.ID_RESTORE_PROGRESS)
 
-        val timeString = context.stringResource(
-            MR.strings.restore_duration,
-            TimeUnit.MILLISECONDS.toMinutes(time),
-            TimeUnit.MILLISECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds(
-                TimeUnit.MILLISECONDS.toMinutes(time),
-            ),
-        )
-
         with(completeNotificationBuilder) {
-            setContentTitle(contentTitle)
-            setContentText(
-                context.pluralStringResource(
-                    MR.plurals.restore_completed_message,
-                    errorCount,
-                    timeString,
-                    errorCount,
-                ),
-            )
+            if (sync) {
+                // KMK -->
+                // A sync wrote here what the server sent, so this notification says that it is the
+                // local half of the sync instead of the upload the other one reports.
+                setSyncWriteContent(time, errorCount, written, trigger)
+                // KMK <--
+            } else {
+                val timeString = context.stringResource(
+                    MR.strings.restore_duration,
+                    TimeUnit.MILLISECONDS.toMinutes(time),
+                    TimeUnit.MILLISECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds(
+                        TimeUnit.MILLISECONDS.toMinutes(time),
+                    ),
+                )
+
+                setContentTitle(context.stringResource(MR.strings.restore_completed))
+                setContentText(
+                    context.pluralStringResource(
+                        MR.plurals.restore_completed_message,
+                        errorCount,
+                        timeString,
+                        errorCount,
+                    ),
+                )
+            }
 
             clearActions()
             if (errorCount > 0 && !path.isNullOrEmpty() && !file.isNullOrEmpty()) {
@@ -201,4 +213,35 @@ class BackupNotifier(private val context: Context) {
             show(Notifications.ID_RESTORE_COMPLETE)
         }
     }
+
+    // KMK -->
+    /** The 「写进本机」 half of a sync: what was applied here, how long it took, and any errors. */
+    private fun NotificationCompat.Builder.setSyncWriteContent(
+        time: Long,
+        errorCount: Int,
+        written: List<SyncSectionCount>,
+        trigger: SyncTrigger,
+    ) {
+        val duration = SyncText.duration(context, time)
+        val line = written.takeIf { it.isNotEmpty() }
+            ?.let { context.stringResource(KMR.strings.sync_detail_write, SyncText.sections(context, it)) }
+
+        setContentTitle(context.stringResource(KMR.strings.sync_notif_title_local))
+        setContentText(listOfNotNull(line, duration).joinToString(" · "))
+        setStyle(
+            NotificationCompat.BigTextStyle().bigText(
+                buildList {
+                    line?.let(::add)
+                    add(duration)
+                    if (trigger != SyncTrigger.UNKNOWN) {
+                        add(context.stringResource(KMR.strings.sync_detail_trigger, SyncText.trigger(context, trigger)))
+                    }
+                    if (errorCount > 0) {
+                        add(context.stringResource(KMR.strings.sync_detail_errors, errorCount))
+                    }
+                }.joinToString("\n"),
+            ),
+        )
+    }
+    // KMK <--
 }

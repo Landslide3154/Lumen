@@ -27,6 +27,7 @@ import eu.kanade.tachiyomi.data.saver.Image
 import eu.kanade.tachiyomi.data.saver.ImageSaver
 import eu.kanade.tachiyomi.data.saver.Location
 import eu.kanade.tachiyomi.data.sync.SyncDataJob
+import eu.kanade.tachiyomi.data.sync.SyncTrigger
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.source.online.MetadataSource
@@ -834,7 +835,7 @@ class ReaderViewModel @JvmOverloads constructor(
                 // SY -->
                 // Check if syncing is enabled for chapter read:
                 if (isSyncEnabled && syncTriggerOpt.syncOnChapterRead) {
-                    SyncDataJob.startNow(Injekt.get<Application>())
+                    SyncDataJob.startNow(Injekt.get<Application>(), trigger = SyncTrigger.CHAPTER_READ)
                 }
                 // SY <--
             }
@@ -850,7 +851,7 @@ class ReaderViewModel @JvmOverloads constructor(
             // SY -->
             // Check if syncing is enabled for chapter open:
             if (isSyncEnabled && syncTriggerOpt.syncOnChapterOpen && readerChapter.chapter.last_page_read == 0) {
-                SyncDataJob.startNow(Injekt.get<Application>())
+                SyncDataJob.startNow(Injekt.get<Application>(), trigger = SyncTrigger.CHAPTER_OPEN)
             }
             // SY <--
         }

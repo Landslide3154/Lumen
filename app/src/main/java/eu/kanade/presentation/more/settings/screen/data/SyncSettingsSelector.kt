@@ -15,6 +15,7 @@ import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.data.backup.create.BackupOptions
 import eu.kanade.tachiyomi.data.sync.SyncDataJob
+import eu.kanade.tachiyomi.data.sync.SyncTrigger
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.update
 import tachiyomi.i18n.MR
@@ -99,7 +100,9 @@ private class SyncSettingsSelectorModel(
     }
 
     fun syncNow(context: Context) {
-        SyncDataJob.startNow(context)
+        // KMK -->
+        SyncDataJob.startNow(context, trigger = SyncTrigger.MANUAL)
+        // KMK <--
     }
 
     @Immutable

@@ -275,6 +275,37 @@
     <string name="sync_error_webdav_folder">Failed to create WebDAV folder: %1$s</string>
     <string name="sync_error_webdav_conflict">Sync conflict detected. Another device may have updated the remote backup. Please retry syncing or check your WebDAV folder.</string>
 
+    <!-- Lumen 同步完成通知：一次同步两步各一条（传服务器 / 写进本机），折叠一行、展开看明细 -->
+    <string name="sync_notif_title_server">Library sync complete · Sent to server</string>
+    <string name="sync_notif_title_local">Library sync complete · Written to device</string>
+    <string name="sync_detail_upload">Uploaded: %1$s</string>
+    <string name="sync_detail_write">Written to device: %1$s</string>
+    <string name="sync_detail_no_upload">Nothing changed on this device</string>
+    <string name="sync_detail_mode">Mode: %1$s · %2$s</string>
+    <string name="sync_detail_trigger">Triggered by: %1$s</string>
+    <string name="sync_detail_nothing_new">The server had nothing new, so nothing was written here</string>
+    <string name="sync_detail_deleted_categories">Categories deleted here: %1$d</string>
+    <string name="sync_detail_errors">Errors: %1$d</string>
+    <string name="sync_item_manga">%1$d manga</string>
+    <string name="sync_item_chapter">%1$d reading records</string>
+    <string name="sync_item_category">%1$d categories</string>
+    <string name="sync_item_setting">%1$d settings</string>
+    <string name="sync_item_source_setting">%1$d source settings</string>
+    <string name="sync_item_saved_search">%1$d searches</string>
+    <string name="sync_item_feed">%1$d feeds</string>
+    <string name="sync_item_extension_store">%1$d extension repos</string>
+    <string name="sync_mode_delta">changes only</string>
+    <string name="sync_mode_full">full library</string>
+    <string name="sync_duration">%1$d s</string>
+    <string name="sync_trigger_manual">sync button</string>
+    <string name="sync_trigger_before_update">before library update</string>
+    <string name="sync_trigger_scheduled">scheduled sync</string>
+    <string name="sync_trigger_app_start">app start</string>
+    <string name="sync_trigger_app_resume">app resumed</string>
+    <string name="sync_trigger_chapter_open">chapter opened</string>
+    <string name="sync_trigger_chapter_read">chapter read</string>
+    <string name="sync_trigger_unknown">automatic</string>
+
     <!-- Lumen 中文化：上游代码里硬编码的界面文案（改为资源后可翻译） -->
     <string name="eh_language_original">Original</string>
     <string name="eh_language_rewrite">Rewrite</string>

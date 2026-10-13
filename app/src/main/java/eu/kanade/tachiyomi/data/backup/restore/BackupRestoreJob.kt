@@ -16,6 +16,7 @@ import androidx.work.workDataOf
 import eu.kanade.tachiyomi.data.BackupRestoreStatus
 import eu.kanade.tachiyomi.data.backup.BackupNotifier
 import eu.kanade.tachiyomi.data.notification.Notifications
+import eu.kanade.tachiyomi.data.sync.SyncTrigger
 import eu.kanade.tachiyomi.util.system.cancelNotification
 import eu.kanade.tachiyomi.util.system.isRunning
 import eu.kanade.tachiyomi.util.system.setForegroundSafely
@@ -52,11 +53,14 @@ class BackupRestoreJob(private val context: Context, workerParams: WorkerParamet
         // KMK <--
 
         val isSync = inputData.getBoolean(SYNC_KEY, false)
+        // KMK -->
+        val trigger = SyncTrigger.fromKey(inputData.getString(TRIGGER_KEY))
+        // KMK <--
 
         setForegroundSafely()
 
         return try {
-            BackupRestorer(context, notifier, isSync).restore(uri, options)
+            BackupRestorer(context, notifier, isSync, trigger = trigger).restore(uri, options)
             Result.success()
         } catch (e: Exception) {
             if (e is CancellationException) {
@@ -114,8 +118,12 @@ class BackupRestoreJob(private val context: Context, workerParams: WorkerParamet
             uri: Uri,
             options: RestoreOptions,
             sync: Boolean = false,
+            // KMK -->
+            /** Why the sync that produced this data ran, named in the completion notification. */
+            trigger: SyncTrigger = SyncTrigger.UNKNOWN,
+            // KMK <--
         ): Boolean {
-            val request = enqueue(context, uri, options, sync)
+            val request = enqueue(context, uri, options, sync, trigger)
             val own = context.workManager.getWorkInfoByIdFlow(request.id)
                 .first { it == null || it.state.isFinished }
             if (own != null) {
@@ -131,11 +139,17 @@ class BackupRestoreJob(private val context: Context, workerParams: WorkerParamet
             uri: Uri,
             options: RestoreOptions,
             sync: Boolean,
+            // KMK -->
+            trigger: SyncTrigger = SyncTrigger.UNKNOWN,
+            // KMK <--
         ): OneTimeWorkRequest {
             val inputData = workDataOf(
                 LOCATION_URI_KEY to uri.toString(),
                 SYNC_KEY to sync,
                 OPTIONS_KEY to options.asBooleanArray(),
+                // KMK -->
+                TRIGGER_KEY to trigger.name,
+                // KMK <--
             )
             val request = OneTimeWorkRequestBuilder<BackupRestoreJob>()
                 .addTag(TAG)
@@ -161,3 +175,4 @@ private const val TAG = "BackupRestore"
 private const val LOCATION_URI_KEY = "location_uri" // String
 private const val SYNC_KEY = "sync" // Boolean
 private const val OPTIONS_KEY = "options" // BooleanArray
+private const val TRIGGER_KEY = "trigger" // String, SyncTrigger name

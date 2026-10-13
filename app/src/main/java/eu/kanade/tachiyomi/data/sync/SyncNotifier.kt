@@ -11,6 +11,8 @@ import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.util.system.cancelNotification
 import eu.kanade.tachiyomi.util.system.notificationBuilder
 import eu.kanade.tachiyomi.util.system.notify
+import tachiyomi.core.common.i18n.stringResource
+import tachiyomi.i18n.kmk.KMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -91,14 +93,58 @@ class SyncNotifier(private val context: Context) {
         }
     }
 
-    fun showSyncSuccess(message: String?) {
+    fun showSyncSuccess(summary: SyncSummary) {
         context.cancelNotification(Notifications.ID_SYNC_PROGRESS)
 
+        // KMK -->
+        val duration = SyncText.duration(context, summary.durationMs)
+        val moved = if (summary.uploaded.isEmpty()) {
+            context.stringResource(KMR.strings.sync_detail_no_upload)
+        } else {
+            context.stringResource(KMR.strings.sync_detail_upload, SyncText.sections(context, summary.uploaded))
+        }
+        // the collapsed line names a couple of sections; the expanded detail lists them all
+        val collapsed = if (summary.uploaded.size > COLLAPSED_SECTIONS) {
+            context.stringResource(KMR.strings.sync_detail_upload, collapsedSections(context, summary.uploaded))
+        } else {
+            moved
+        }
+
+        val detail = buildList {
+            add(moved)
+            add(context.stringResource(KMR.strings.sync_detail_mode, SyncText.mode(context, summary.full), duration))
+            add(context.stringResource(KMR.strings.sync_detail_trigger, SyncText.trigger(context, summary.trigger)))
+            if (summary.deletedCategories > 0) {
+                add(
+                    context.stringResource(
+                        KMR.strings.sync_detail_deleted_categories,
+                        summary.deletedCategories,
+                    ),
+                )
+            }
+            if (summary.remoteHadNothingNew) {
+                add(context.stringResource(KMR.strings.sync_detail_nothing_new))
+            }
+        }.joinToString("\n")
+
         with(completeNotificationBuilder) {
-            setContentTitle(context.getString(R.string.sync_complete))
-            setContentText(message)
+            setContentTitle(context.stringResource(KMR.strings.sync_notif_title_server))
+            setContentText("$collapsed · $duration")
+            setStyle(NotificationCompat.BigTextStyle().bigText(detail))
 
             show(Notifications.ID_SYNC_COMPLETE)
         }
+        // KMK <--
     }
+
+    // KMK -->
+    private fun collapsedSections(context: Context, counts: List<SyncSectionCount>): String {
+        val head = SyncText.sections(context, counts.take(COLLAPSED_SECTIONS))
+        return if (counts.size > COLLAPSED_SECTIONS) "$head…" else head
+    }
+
+    private companion object {
+        const val COLLAPSED_SECTIONS = 2
+    }
+    // KMK <--
 }

@@ -31,6 +31,7 @@ import eu.kanade.tachiyomi.data.library.komga.encodeRetryIds
 import eu.kanade.tachiyomi.data.library.komga.parseKomgaSeriesUrl
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.data.sync.SyncDataJob
+import eu.kanade.tachiyomi.data.sync.SyncTrigger
 import eu.kanade.tachiyomi.data.track.TrackStatus
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.network.NetworkHelper
@@ -936,6 +937,11 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                 // Define the SyncDataJob
                 val syncDataJob = OneTimeWorkRequestBuilder<SyncDataJob>()
                     .addTag(SyncDataJob.TAG_MANUAL)
+                    // KMK -->
+                    // the completion notification names this trigger, so an update the user
+                    // started does not look like a sync they asked for
+                    .setInputData(workDataOf(SyncDataJob.KEY_TRIGGER to SyncTrigger.BEFORE_LIBRARY_UPDATE.name))
+                    // KMK <--
                     .build()
 
                 // Chain SyncDataJob to run before LibraryUpdateJob

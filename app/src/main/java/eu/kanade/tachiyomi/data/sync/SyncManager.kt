@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.data.sync
 
 import android.content.Context
 import android.net.Uri
-import dev.icerock.moko.resources.StringResource
 import eu.kanade.domain.sync.SyncPreferences
 import eu.kanade.tachiyomi.data.backup.create.BackupCreator
 import eu.kanade.tachiyomi.data.backup.create.BackupOptions
@@ -55,6 +54,9 @@ class SyncManager(
         ignoreUnknownKeys = true
     },
     private val getCategories: GetCategories = Injekt.get(),
+    // KMK --> why this sync ran, so the completion notification can say it
+    private val trigger: SyncTrigger = SyncTrigger.UNKNOWN,
+    // KMK <--
 ) {
     private val backupCreator: BackupCreator = BackupCreator(context, false)
     private val notifier: SyncNotifier = SyncNotifier(context)
@@ -87,6 +89,7 @@ class SyncManager(
         // Epoch seconds. Everything modified before this instant is in this upload; the next
         // delta starts here.
         val syncStart = Clock.System.now().epochSeconds
+        val startedAt = System.currentTimeMillis()
         // KMK <--
 
         // Reset isSyncing in case it was left over or failed syncing during restore.
@@ -199,10 +202,27 @@ class SyncManager(
         }
 
         // KMK -->
+        // The upload is known only now: for a delta, what counts as uploaded is what the server
+        // echoed back as changed.
+        val uploaded = uploadedSections(backup, remoteBackup, full)
+        fun summary(
+            remoteHadNothingNew: Boolean = false,
+            deletedCategories: Int = 0,
+        ) = SyncSummary(
+            uploaded = uploaded,
+            full = full,
+            trigger = trigger,
+            durationMs = System.currentTimeMillis() - startedAt,
+            remoteHadNothingNew = remoteHadNothingNew,
+            deletedCategories = deletedCategories,
+        )
+        // KMK <--
+
+        // KMK -->
         if (remoteBackup === syncData.backup || (result.protocolV2 && !result.changed)) {
             // nothing new on the remote; a v2 server says so explicitly
             logcat(LogPriority.DEBUG) { "Skip restore, nothing new on the remote" }
-            finishWithSuccess(syncStart, KMR.strings.sync_success)
+            finishWithSuccess(syncStart, summary(remoteHadNothingNew = true))
             return
         }
 
@@ -219,7 +239,7 @@ class SyncManager(
             // Check if it's first sync based on lastSyncTimestamp
             if (syncPreferences.lastSyncTimestamp().get() == 0L && databaseManga.isNotEmpty()) {
                 // It's first sync no need to restore data. (just update remote data)
-                finishWithSuccess(syncStart, KMR.strings.sync_success_uploaded)
+                finishWithSuccess(syncStart, summary(remoteHadNothingNew = true))
                 return
             }
         }
@@ -268,29 +288,31 @@ class SyncManager(
 
         if (!hasChanges) {
             // it's a local sync, no need to restore data (just update remote data)
-            finishWithSuccess(syncStart, KMR.strings.sync_success)
+            finishWithSuccess(syncStart, summary(remoteHadNothingNew = true))
             return
         }
 
         // The response carries the complete category list, so a category missing from it was
         // deleted on another device. Tombstone its uid so the deletion does not come back.
-        if (syncOptions.categories) {
-            val categoriesToDelete = categoriesDeletedRemotely(
+        val deletedCategories = if (syncOptions.categories) {
+            categoriesDeletedRemotely(
                 local = getCategories.await(),
                 uploaded = backup.backupCategories,
                 remote = newSyncData.backupCategories,
             )
-            if (categoriesToDelete.isNotEmpty()) {
-                handler.await(inTransaction = true) {
-                    categoriesToDelete.forEach { categoriesQueries.delete(it.id) }
-                }
-                categoriesToDelete.forEach { syncPreferences.rememberDeletedCategory(it.uid) }
+        } else {
+            emptyList()
+        }
+        if (deletedCategories.isNotEmpty()) {
+            handler.await(inTransaction = true) {
+                deletedCategories.forEach { categoriesQueries.delete(it.id) }
             }
+            deletedCategories.forEach { syncPreferences.rememberDeletedCategory(it.uid) }
         }
 
         if (newSyncData.hasNothingToRestore()) {
             // the category deletions above were the whole change; an empty backup cannot be decoded
-            finishWithSuccess(syncStart, KMR.strings.sync_success)
+            finishWithSuccess(syncStart, summary(deletedCategories = deletedCategories.size))
             return
         }
         // KMK <--
@@ -313,6 +335,9 @@ class SyncManager(
                     extensionStores = syncOptions.extensionStores,
                     savedSearchesFeeds = syncOptions.savedSearchesFeeds,
                 ),
+                // KMK -->
+                trigger = trigger,
+                // KMK <--
             )
             if (applied) {
                 // update the sync timestamp
@@ -332,11 +357,11 @@ class SyncManager(
     }
 
     // KMK -->
-    private fun finishWithSuccess(syncStart: Long, messageRes: StringResource) {
+    private fun finishWithSuccess(syncStart: Long, summary: SyncSummary) {
         syncPreferences.lastSyncTimestamp().set(Date().time)
         // everything modified before this instant reached the server; the next delta starts here
         syncPreferences.lastPushedAt().set(syncStart)
-        notifier.showSyncSuccess(context.stringResource(messageRes))
+        notifier.showSyncSuccess(summary)
     }
     // KMK <--
 

@@ -12,6 +12,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkQuery
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import eu.kanade.domain.sync.SyncPreferences
 import eu.kanade.tachiyomi.data.SyncStatus
 import eu.kanade.tachiyomi.data.notification.Notifications
@@ -35,6 +36,9 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
 
     // KMK -->
     private val syncStatus: SyncStatus = Injekt.get()
+
+    /** Why this sync runs, for the completion notification. */
+    private val trigger: SyncTrigger get() = SyncTrigger.fromKey(inputData.getString(KEY_TRIGGER))
     // KMK <--
 
     override suspend fun doWork(): Result {
@@ -55,7 +59,7 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
         setForegroundSafely()
 
         return try {
-            SyncManager(context).syncData()
+            SyncManager(context, trigger = trigger).syncData()
             Result.success()
             // KMK -->
         } catch (e: OutOfMemoryError) {
@@ -91,6 +95,11 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
         private const val TAG_AUTO = "$TAG_JOB:auto"
         const val TAG_MANUAL = "$TAG_JOB:manual"
 
+        // KMK -->
+        /** Carries the [SyncTrigger] name so the completion notification can name the trigger. */
+        const val KEY_TRIGGER = "trigger"
+        // KMK <--
+
         fun isRunning(context: Context): Boolean {
             return context.workManager.isRunning(TAG_JOB)
         }
@@ -108,6 +117,9 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
                 )
                     .addTag(TAG_JOB)
                     .addTag(TAG_AUTO)
+                    // KMK -->
+                    .setInputData(workDataOf(KEY_TRIGGER to SyncTrigger.SCHEDULED.name))
+                    // KMK <--
                     .build()
 
                 context.workManager.enqueueUniquePeriodicWork(TAG_AUTO, ExistingPeriodicWorkPolicy.UPDATE, request)
@@ -116,7 +128,18 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
             }
         }
 
-        fun startNow(context: Context, manual: Boolean = false) {
+        /**
+         * @param manual true when the user asked for this sync, which keeps it out of the AUTO
+         *   retry path.
+         * @param trigger what to name as the cause in the completion notification.
+         */
+        fun startNow(
+            context: Context,
+            manual: Boolean = false,
+            // KMK -->
+            trigger: SyncTrigger = if (manual) SyncTrigger.MANUAL else SyncTrigger.SCHEDULED,
+            // KMK <--
+        ) {
             val wm = context.workManager
             if (wm.isRunning(TAG_JOB)) {
                 // Already running either as a scheduled or manual job
@@ -126,6 +149,9 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
             val request = OneTimeWorkRequestBuilder<SyncDataJob>()
                 .addTag(TAG_JOB)
                 .addTag(tag)
+                // KMK -->
+                .setInputData(workDataOf(KEY_TRIGGER to trigger.name))
+                // KMK <--
                 .build()
             context.workManager.enqueueUniqueWork(tag, ExistingWorkPolicy.KEEP, request)
         }

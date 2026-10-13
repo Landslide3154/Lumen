@@ -18,6 +18,10 @@ import eu.kanade.tachiyomi.data.backup.restore.restorers.MangaRestorer
 import eu.kanade.tachiyomi.data.backup.restore.restorers.PreferenceRestorer
 import eu.kanade.tachiyomi.data.backup.restore.restorers.SavedSearchRestorer
 import eu.kanade.tachiyomi.data.notification.Notifications
+import eu.kanade.tachiyomi.data.sync.SyncSection
+import eu.kanade.tachiyomi.data.sync.SyncSectionCount
+import eu.kanade.tachiyomi.data.sync.SyncTrigger
+import eu.kanade.tachiyomi.data.sync.syncSections
 import eu.kanade.tachiyomi.util.system.createFileInCacheDir
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -35,6 +39,11 @@ class BackupRestorer(
     private val context: Context,
     private val notifier: BackupNotifier,
     private val isSync: Boolean,
+
+    // KMK -->
+    /** Why the sync that produced this data ran, for the completion notification. */
+    private val trigger: SyncTrigger = SyncTrigger.UNKNOWN,
+    // KMK <--
 
     private val categoriesRestorer: CategoriesRestorer = CategoriesRestorer(/* KMK --> */isSync = isSync/* KMK <-- */),
     private val preferenceRestorer: PreferenceRestorer = PreferenceRestorer(context),
@@ -60,7 +69,9 @@ class BackupRestorer(
     suspend fun restore(uri: Uri, options: RestoreOptions) {
         val startTime = System.currentTimeMillis()
 
-        restoreFromFile(uri, options)
+        // KMK -->
+        val written = restoreFromFile(uri, options)
+        // KMK <--
 
         val time = System.currentTimeMillis() - startTime
 
@@ -72,10 +83,17 @@ class BackupRestorer(
             logFile.parent,
             logFile.name,
             isSync,
+            // KMK -->
+            written = written,
+            trigger = trigger,
+            // KMK <--
         )
     }
 
-    private suspend fun restoreFromFile(uri: Uri, options: RestoreOptions) {
+    // KMK -->
+    /** Returns what the applied data carried, for the sync completion notification. */
+    private suspend fun restoreFromFile(uri: Uri, options: RestoreOptions): List<SyncSectionCount> {
+        // KMK <--
         val backup = BackupDecoder(context).decode(uri)
 
         // Store source mapping for error messages
@@ -132,6 +150,21 @@ class BackupRestorer(
 
             // TODO: optionally trigger online library + tracker update
         }
+
+        // KMK -->
+        // A sync only carries what changed, so these counts are what this device was written with.
+        fun count(enabled: Boolean, value: Int) = if (enabled) value else 0
+        return syncSections(
+            SyncSection.MANGA to count(options.libraryEntries, backup.backupManga.size),
+            SyncSection.CHAPTER to count(options.libraryEntries, backup.backupManga.sumOf { it.chapters.size }),
+            SyncSection.CATEGORY to count(options.categories, backup.backupCategories.size),
+            SyncSection.SETTING to count(options.appSettings, backup.backupPreferences.size),
+            SyncSection.SOURCE_SETTING to count(options.sourceSettings, backup.backupSourcePreferences.size),
+            SyncSection.SAVED_SEARCH to count(options.savedSearchesFeeds, backup.backupSavedSearches.size),
+            SyncSection.FEED to count(options.savedSearchesFeeds, backup.backupFeeds.size),
+            SyncSection.EXTENSION_STORE to count(options.extensionStores, backup.backupExtensionStores.size),
+        )
+        // KMK <--
     }
 
     context(scope: CoroutineScope)

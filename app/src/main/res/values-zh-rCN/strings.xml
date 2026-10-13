@@ -80,4 +80,35 @@
     <string name="debug_worker_finished">已完成</string>
     <string name="debug_worker_running">运行中</string>
     <string name="debug_backup_schema">备份文件结构</string>
+
+    <!-- ① Lumen 新增：同步完成通知（一次同步两步各一条，折叠一行 + 展开明细） -->
+    <string name="sync_notif_title_server">书架同步完成 · 同步到服务器</string>
+    <string name="sync_notif_title_local">书架同步完成 · 写进本机</string>
+    <string name="sync_detail_upload">上传：%1$s</string>
+    <string name="sync_detail_write">写进本机：%1$s</string>
+    <string name="sync_detail_no_upload">本机没有变化</string>
+    <string name="sync_detail_mode">方式：%1$s · %2$s</string>
+    <string name="sync_detail_trigger">触发：%1$s</string>
+    <string name="sync_detail_nothing_new">服务器没有新数据，本机无需写入</string>
+    <string name="sync_detail_deleted_categories">本机删除分类：%1$d 个</string>
+    <string name="sync_detail_errors">错误：%1$d 个</string>
+    <string name="sync_item_manga">书架 %1$d 部</string>
+    <string name="sync_item_chapter">阅读记录 %1$d 条</string>
+    <string name="sync_item_category">分类 %1$d 个</string>
+    <string name="sync_item_setting">设置 %1$d 项</string>
+    <string name="sync_item_source_setting">图源设置 %1$d 项</string>
+    <string name="sync_item_saved_search">搜索 %1$d 条</string>
+    <string name="sync_item_feed">订阅 %1$d 条</string>
+    <string name="sync_item_extension_store">扩展仓库 %1$d 个</string>
+    <string name="sync_mode_delta">增量（只传变化）</string>
+    <string name="sync_mode_full">整库</string>
+    <string name="sync_duration">用时 %1$d 秒</string>
+    <string name="sync_trigger_manual">手动点同步</string>
+    <string name="sync_trigger_before_update">更新书架前自动</string>
+    <string name="sync_trigger_scheduled">定时自动</string>
+    <string name="sync_trigger_app_start">应用启动时</string>
+    <string name="sync_trigger_app_resume">回到前台时</string>
+    <string name="sync_trigger_chapter_open">打开章节时</string>
+    <string name="sync_trigger_chapter_read">阅读章节后</string>
+    <string name="sync_trigger_unknown">自动</string>
 </resources>
