@@ -56,7 +56,9 @@ internal fun uploadedSections(upload: Backup, remote: Backup, full: Boolean): Li
         ),
         SyncSection.EXTENSION_STORE to moved(
             upload.backupExtensionStores.size,
-            extensionStoresDiffer(upload.backupExtensionStores, remote.backupExtensionStores),
+            // a response leaves out the stores it kept, so an empty list means "unchanged" here too
+            remote.backupExtensionStores.isNotEmpty() &&
+                extensionStoresDiffer(upload.backupExtensionStores, remote.backupExtensionStores),
         ),
     )
 }

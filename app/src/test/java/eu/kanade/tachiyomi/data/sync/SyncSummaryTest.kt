@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.data.sync
 import eu.kanade.tachiyomi.data.backup.models.Backup
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
 import eu.kanade.tachiyomi.data.backup.models.BackupChapter
+import eu.kanade.tachiyomi.data.backup.models.BackupExtensionStore
 import eu.kanade.tachiyomi.data.backup.models.BackupManga
 import eu.kanade.tachiyomi.data.backup.models.BackupPreference
 import eu.kanade.tachiyomi.data.backup.models.StringPreferenceValue
@@ -24,12 +25,19 @@ class SyncSummaryTest {
 
     private fun preference(key: String) = BackupPreference(key = key, value = StringPreferenceValue())
 
+    private fun extensionStore(indexUrl: String) = BackupExtensionStore(
+        indexUrl = indexUrl,
+        name = "Keiyoushi",
+        signingKey = "key",
+    )
+
     @Test
     fun `a full upload reports every section that carries something`() {
         val upload = Backup(
             backupManga = listOf(manga("/a", chapter("/a/1")), manga("/b")),
             backupCategories = listOf(category("Reading", uid = 1)),
             backupPreferences = listOf(preference("theme")),
+            backupExtensionStores = listOf(extensionStore("https://example.com/index.min.json")),
         )
 
         val sections = uploadedSections(upload, remote = Backup(), full = true)
@@ -40,6 +48,7 @@ class SyncSummaryTest {
                 SyncSectionCount(SyncSection.CHAPTER, 1),
                 SyncSectionCount(SyncSection.CATEGORY, 1),
                 SyncSectionCount(SyncSection.SETTING, 1),
+                SyncSectionCount(SyncSection.EXTENSION_STORE, 1),
             ),
             sections,
         )
@@ -69,6 +78,16 @@ class SyncSummaryTest {
         assertEquals(
             listOf(SyncSectionCount(SyncSection.SETTING, 1)),
             uploadedSections(upload, remote = remote, full = false),
+        )
+    }
+
+    @Test
+    fun `a delta leaves out an extension store the server did not send back`() {
+        val upload = Backup(backupExtensionStores = listOf(extensionStore("https://example.com/index.min.json")))
+
+        assertEquals(
+            emptyList<SyncSectionCount>(),
+            uploadedSections(upload, remote = Backup(), full = false),
         )
     }
 
