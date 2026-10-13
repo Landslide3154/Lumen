@@ -18,6 +18,17 @@ BEGIN
     WHERE _id = new.manga_id AND (SELECT is_syncing FROM mangas WHERE _id = new.manga_id) = 0;
 END;
 
+-- KMK -->
+-- Removing a manga from a category is a manga-level change too; without this a delta never
+-- notices the removal and the other devices keep the membership.
+CREATE TRIGGER delete_manga_category_update_version AFTER DELETE ON mangas_categories
+BEGIN
+    UPDATE mangas
+    SET version = version + 1
+    WHERE _id = old.manga_id AND (SELECT is_syncing FROM mangas WHERE _id = old.manga_id) = 0;
+END;
+-- KMK <--
+
 insert:
 INSERT INTO mangas_categories(manga_id, category_id)
 VALUES (:mangaId, :categoryId);

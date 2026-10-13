@@ -191,7 +191,11 @@ class MangaRepositoryImpl(
                     mangaId = value.id,
                     updateStrategy = value.updateStrategy?.let(UpdateStrategyColumnAdapter::encode),
                     version = value.version,
-                    isSyncing = 0,
+                    // KMK -->
+                    // null keeps whatever a running restore set, and lets the trigger stamp the row
+                    lastModifiedAt = null,
+                    isSyncing = null,
+                    // KMK <--
                     notes = value.notes,
                     memo = value.memo?.let(MemoColumnAdapter::encode),
                 )

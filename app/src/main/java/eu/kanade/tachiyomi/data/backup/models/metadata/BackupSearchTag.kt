@@ -7,8 +7,10 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class BackupSearchTag(
     @ProtoNumber(1) var namespace: String? = null,
-    @ProtoNumber(2) var name: String,
-    @ProtoNumber(3) var type: Int,
+    // KMK --> zero-value defaults, see BackupManga
+    @ProtoNumber(2) var name: String = "",
+    @ProtoNumber(3) var type: Int = 0,
+    // KMK <--
 ) {
     fun getSearchTag(mangaId: Long): SearchTag {
         return SearchTag(

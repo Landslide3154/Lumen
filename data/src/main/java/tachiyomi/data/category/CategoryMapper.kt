@@ -10,6 +10,8 @@ object CategoryMapper {
         flags: Long,
         // KMK -->
         hidden: Long,
+        version: Long,
+        uid: Long,
         // KMK <--
     ): Category {
         return Category(
@@ -19,6 +21,8 @@ object CategoryMapper {
             flags = flags,
             // KMK -->
             hidden = hidden == 1L,
+            version = version,
+            uid = uid,
             // KMK <--
         )
     }

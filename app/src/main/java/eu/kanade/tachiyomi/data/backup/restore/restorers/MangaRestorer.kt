@@ -55,6 +55,11 @@ class MangaRestorer(
     private var now = ZonedDateTime.now()
     private var currentFetchWindow = fetchInterval.getWindow(now)
 
+    // KMK -->
+    // 1 while applying a sync so the triggers neither bump versions nor stamp last_modified_at
+    private val syncingFlag = if (isSync) 1L else 0L
+    // KMK <--
+
     init {
         now = ZonedDateTime.now()
         currentFetchWindow = fetchInterval.getWindow(now)
@@ -169,7 +174,12 @@ class MangaRestorer(
                 mangaId = manga.id,
                 updateStrategy = manga.updateStrategy.let(UpdateStrategyColumnAdapter::encode),
                 version = manga.version,
-                isSyncing = 1,
+                // KMK -->
+                // A sync applies the server's timestamp instead of stamping the row, or the next
+                // delta would upload everything the server just sent us back.
+                lastModifiedAt = if (isSync) manga.lastModifiedAt else null,
+                isSyncing = syncingFlag,
+                // KMK <--
                 notes = manga.notes,
                 memo = manga.memo.let(MemoColumnAdapter::encode),
             )
@@ -257,19 +267,23 @@ class MangaRestorer(
         handler.await(true) {
             chapters.forEach { chapter ->
                 chaptersQueries.insert(
-                    chapter.mangaId,
-                    chapter.url,
-                    chapter.name,
-                    chapter.scanlator,
-                    chapter.read,
-                    chapter.bookmark,
-                    chapter.lastPageRead,
-                    chapter.chapterNumber,
-                    chapter.sourceOrder,
-                    chapter.dateFetch,
-                    chapter.dateUpload,
-                    chapter.version,
-                    chapter.memo,
+                    // KMK -->
+                    mangaId = chapter.mangaId,
+                    url = chapter.url,
+                    name = chapter.name,
+                    scanlator = chapter.scanlator,
+                    read = chapter.read,
+                    bookmark = chapter.bookmark,
+                    lastPageRead = chapter.lastPageRead,
+                    chapterNumber = chapter.chapterNumber,
+                    sourceOrder = chapter.sourceOrder,
+                    dateFetch = chapter.dateFetch,
+                    dateUpload = chapter.dateUpload,
+                    lastModifiedAt = chapter.lastModifiedAt,
+                    version = chapter.version,
+                    isSyncing = syncingFlag,
+                    // KMK <--
+                    memo = chapter.memo,
                 )
             }
         }
@@ -294,7 +308,10 @@ class MangaRestorer(
                     // KMK <--
                     chapterId = chapter.id,
                     version = chapter.version,
-                    isSyncing = 1,
+                    // KMK -->
+                    lastModifiedAt = if (isSync) chapter.lastModifiedAt else null,
+                    isSyncing = syncingFlag,
+                    // KMK <--
                     memo = chapter.memo.let(MemoColumnAdapter::encode),
                 )
             }
@@ -331,6 +348,10 @@ class MangaRestorer(
                 dateAdded = manga.dateAdded,
                 updateStrategy = manga.updateStrategy,
                 version = manga.version,
+                // KMK -->
+                lastModifiedAt = manga.lastModifiedAt,
+                isSyncing = syncingFlag,
+                // KMK <--
                 notes = manga.notes,
                 memo = manga.memo,
             )

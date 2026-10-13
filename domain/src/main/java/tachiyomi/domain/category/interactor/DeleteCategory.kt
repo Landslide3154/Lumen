@@ -12,11 +12,21 @@ class DeleteCategory(
     private val categoryRepository: CategoryRepository,
     private val libraryPreferences: LibraryPreferences,
     private val downloadPreferences: DownloadPreferences,
+    // KMK -->
+    /** Called with the deleted category's sync uid, so sync can send a tombstone. */
+    private val onCategoryDeleted: (uid: Long) -> Unit = {},
+    // KMK <--
 ) {
 
     suspend fun await(categoryId: Long) = withNonCancellableContext {
         try {
+            // KMK -->
+            val uid = categoryRepository.get(categoryId)?.uid
+            // KMK <--
             categoryRepository.delete(categoryId)
+            // KMK -->
+            if (uid != null) onCategoryDeleted(uid)
+            // KMK <--
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             return@withNonCancellableContext Result.InternalError(e)

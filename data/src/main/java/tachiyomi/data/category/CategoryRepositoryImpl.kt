@@ -44,6 +44,8 @@ class CategoryRepositoryImpl(
                 flags = category.flags,
                 // KMK -->
                 hidden = if (category.hidden) 1L else 0L,
+                version = category.version,
+                uid = category.uid,
                 // KMK <--
             )
             categoriesQueries.selectLastInsertedRowId()
@@ -72,6 +74,8 @@ class CategoryRepositoryImpl(
             flags = update.flags,
             // KMK -->
             hidden = update.hidden?.let { if (it) 1L else 0L },
+            version = update.version,
+            uid = update.uid,
             // KMK <--
             categoryId = update.id,
         )

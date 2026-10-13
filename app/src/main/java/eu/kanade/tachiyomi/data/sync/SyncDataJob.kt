@@ -55,6 +55,12 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
         return try {
             SyncManager(context).syncData()
             Result.success()
+            // KMK -->
+        } catch (e: OutOfMemoryError) {
+            logcat(LogPriority.ERROR, e)
+            notifier.showSyncError("Not enough memory to sync this library")
+            Result.success() // try again next time
+            // KMK <--
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             notifier.showSyncError(e.message)

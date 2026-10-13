@@ -1,4 +1,4 @@
-﻿import mihon.buildlogic.Config
+import mihon.buildlogic.Config
 import mihon.buildlogic.getBuildTime
 import mihon.buildlogic.getCommitCount
 import mihon.buildlogic.getGitSha
@@ -24,7 +24,7 @@ shortcutHelper.setFilePath("./shortcuts.xml")
 
 // KMK -->
 /** Lumen 自有版本序号：每次交付 +1，版本号显示为 上游版本.01 / .02 … */
-val lumenRevision = 15
+val lumenRevision = 16
 val lumenVersionName = "1.14.1." + lumenRevision.toString().padStart(2, '0')
 // KMK <--
 

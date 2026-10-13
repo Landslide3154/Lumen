@@ -8,12 +8,15 @@ CREATE TABLE categories(
     flags INTEGER NOT NULL,
     manga_order TEXT AS List<Long> NOT NULL,
     -- KMK -->
-    hidden INTEGER NOT NULL DEFAULT 0
+    hidden INTEGER NOT NULL DEFAULT 0,
+    -- SyncYomi v2 keys categories by a stable uid and merges them by version
+    version INTEGER NOT NULL DEFAULT 0,
+    uid INTEGER NOT NULL DEFAULT 0
     -- KMK <--
 );
 
 -- Insert system category
-INSERT OR IGNORE INTO categories(_id, name, sort, flags, manga_order, hidden) VALUES (0, "", -1, 0, "", 0);
+INSERT OR IGNORE INTO categories(_id, name, sort, flags, manga_order, hidden, version, uid) VALUES (0, "", -1, 0, "", 0, 0, 0);
 -- Disallow deletion of default category
 CREATE TRIGGER IF NOT EXISTS system_category_delete_trigger BEFORE DELETE
 ON categories
@@ -24,7 +27,10 @@ BEGIN SELECT CASE
 END;
 
 getCategory:
-SELECT _id,name,sort,flags,hidden
+SELECT _id,name,sort,flags,hidden,
+-- KMK -->
+version,uid
+-- KMK <--
 FROM categories
 WHERE _id = :id
 LIMIT 1;
@@ -36,7 +42,9 @@ name,
 sort AS `order`,
 flags,
 -- KMK -->
-hidden
+hidden,
+version,
+uid
 -- KMK <--
 FROM categories
 ORDER BY sort;
@@ -48,16 +56,39 @@ C.name,
 C.sort AS `order`,
 C.flags,
 -- KMK -->
-C.hidden
+C.hidden,
+C.version,
+C.uid
 -- KMK <--
 FROM categories C
 JOIN mangas_categories MC
 ON C._id = MC.category_id
 WHERE MC.manga_id = :mangaId;
 
+-- KMK -->
+-- Give every user category a stable identity for SyncYomi v2. The system category keeps uid 0 so
+-- every device maps it by its (empty) name.
+CREATE TRIGGER insert_category_uid AFTER INSERT ON categories
+WHEN new._id > 0
+BEGIN
+    UPDATE categories
+    SET uid = CASE WHEN uid = 0 THEN abs(random()) ELSE uid END
+    WHERE _id = new._id;
+END;
+
+-- Category edits are versioned so a rename or a reorder propagates instead of losing the tie.
+CREATE TRIGGER update_category_version AFTER UPDATE ON categories
+WHEN new.name != old.name OR new.sort != old.sort OR new.flags != old.flags OR new.hidden != old.hidden
+BEGIN
+    UPDATE categories
+    SET version = version + 1
+    WHERE _id = new._id;
+END;
+-- KMK <--
+
 insert:
-INSERT INTO categories(name, sort, flags, manga_order, hidden)
-VALUES (:name, :order, :flags, "", :hidden);
+INSERT INTO categories(name, sort, flags, manga_order, hidden, version, uid)
+VALUES (:name, :order, :flags, "", :hidden, :version, :uid);
 
 delete:
 DELETE FROM categories
@@ -69,7 +100,9 @@ SET name = coalesce(:name, name),
     sort = coalesce(:order, sort),
     flags = coalesce(:flags, flags),
     -- KMK -->
-    hidden = coalesce(:hidden, hidden)
+    hidden = coalesce(:hidden, hidden),
+    version = coalesce(:version, version),
+    uid = coalesce(:uid, uid)
     -- KMK <--
 WHERE _id = :categoryId;
 

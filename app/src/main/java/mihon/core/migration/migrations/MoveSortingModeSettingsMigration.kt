@@ -42,6 +42,8 @@ class MoveSortingModeSettingsMigration : Migration {
                         order = null,
                         // KMK -->
                         hidden = null,
+                        version = null,
+                        uid = null,
                         // KMK <--
                     )
                 }

@@ -9,6 +9,9 @@ data class Category(
     val flags: Long,
     // KMK -->
     val hidden: Boolean,
+    // SyncYomi v2 identity and merge version, see categories.sq
+    val version: Long = 0,
+    val uid: Long = 0,
     // KMK <--
 ) : Serializable {
 

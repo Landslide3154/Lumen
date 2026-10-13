@@ -16,6 +16,34 @@ class SyncPreferences(
 
     fun lastSyncEtag() = preferenceStore.getString("sync_etag", "")
 
+    // KMK -->
+    // SyncYomi protocol v2 state
+
+    /** Cursor from the last v2 response; send it back on the next merge. */
+    fun syncCursor() = preferenceStore.getLong(Preference.appStateKey("sync_cursor"), 0L)
+
+    /** Epoch seconds of the start of the last successful sync; the next delta starts here. */
+    fun lastPushedAt() = preferenceStore.getLong(Preference.appStateKey("sync_last_pushed_at"), 0L)
+
+    /** Epoch millis of the last sync that carried the complete library. */
+    fun lastFullSync() = preferenceStore.getLong(Preference.appStateKey("sync_last_full_sync"), 0L)
+
+    /** Set when the server asks for a complete library on the next upload. */
+    fun fullSyncRequested() = preferenceStore.getBoolean(Preference.appStateKey("sync_full_requested"), false)
+
+    /** Whether the probed host speaks protocol v2; only valid together with [v2ProbedHost]. */
+    fun serverSupportsV2() = preferenceStore.getBoolean(Preference.appStateKey("sync_server_supports_v2"), false)
+
+    /** The host [serverSupportsV2] belongs to, so switching servers re-probes. */
+    fun v2ProbedHost() = preferenceStore.getString(Preference.appStateKey("sync_v2_probed_host"), "")
+
+    /** Category uids deleted locally but not yet acknowledged by the server as tombstones. */
+    fun pendingDeletedCategoryUids() = preferenceStore.getStringSet(
+        Preference.appStateKey("sync_pending_deleted_category_uids"),
+        emptySet(),
+    )
+    // KMK <--
+
     fun syncInterval() = preferenceStore.getInt("sync_interval", 0)
     fun syncService() = preferenceStore.getInt("sync_service", 0)
 
@@ -52,6 +80,17 @@ class SyncPreferences(
     fun isSyncEnabled(): Boolean {
         return syncService().get() != SyncManager.SyncService.NONE.value
     }
+
+    // KMK -->
+    /**
+     * Remembers a deleted category so the next SyncYomi v2 request can send it as a tombstone.
+     * Ignored when sync is off: there is nobody to tell, and the set would grow forever.
+     */
+    fun rememberDeletedCategory(uid: Long) {
+        if (uid == 0L || !isSyncEnabled()) return
+        pendingDeletedCategoryUids().set(pendingDeletedCategoryUids().get() + uid.toString())
+    }
+    // KMK <--
 
     fun getSyncSettings(): SyncSettings {
         return SyncSettings(

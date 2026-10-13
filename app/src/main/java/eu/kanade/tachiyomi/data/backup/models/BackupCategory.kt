@@ -6,13 +6,19 @@ import tachiyomi.domain.category.model.Category
 
 @Serializable
 class BackupCategory(
-    @ProtoNumber(1) var name: String,
+    // KMK --> zero-value defaults, see BackupManga
+    @ProtoNumber(1) var name: String = "",
+    // KMK <--
     @ProtoNumber(2) var order: Long = 0,
     @ProtoNumber(3) var id: Long = 0,
     // @ProtoNumber(3) val updateInterval: Int = 0, 1.x value not used in 0.x
     @ProtoNumber(100) var flags: Long = 0,
     // KMK -->
     @ProtoNumber(900) var hidden: Boolean = false,
+    // SyncYomi v2 merges categories by version and identifies them by uid.
+    // Numbers match TachiyomiSY so the same server row is addressed by both clients.
+    @ProtoNumber(601) var version: Long = 0,
+    @ProtoNumber(602) var uid: Long = 0,
     // KMK <--
     // SY specific values
     /*@ProtoNumber(600) var mangaOrder: List<Long> = emptyList(),*/
@@ -24,6 +30,8 @@ class BackupCategory(
         order = this@BackupCategory.order,
         // KMK -->
         hidden = this@BackupCategory.hidden,
+        version = this@BackupCategory.version,
+        uid = this@BackupCategory.uid,
         // KMK <--
         /*mangaOrder = this@BackupCategory.mangaOrder*/
     )
@@ -37,6 +45,8 @@ val backupCategoryMapper = { category: Category ->
         flags = category.flags,
         // KMK -->
         hidden = category.hidden,
+        version = category.version,
+        uid = category.uid,
         // KMK <--
     )
 }

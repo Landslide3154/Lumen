@@ -21,6 +21,7 @@ import eu.kanade.domain.source.interactor.ToggleIncognito
 import eu.kanade.domain.source.interactor.ToggleLanguage
 import eu.kanade.domain.source.interactor.ToggleSource
 import eu.kanade.domain.source.interactor.ToggleSourcePin
+import eu.kanade.domain.sync.SyncPreferences
 import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.interactor.RefreshTracks
 import eu.kanade.domain.track.interactor.SyncChapterProgressWithTrack
@@ -115,7 +116,10 @@ class DomainModule : InjektModule {
         addFactory { RenameCategory(get()) }
         addFactory { ReorderCategory(get()) }
         addFactory { UpdateCategory(get()) }
-        addFactory { DeleteCategory(get(), get(), get()) }
+        // KMK -->
+        // the callback records a SyncYomi v2 tombstone for the deleted category
+        addFactory { DeleteCategory(get(), get(), get(), get<SyncPreferences>()::rememberDeletedCategory) }
+        // KMK <--
         // KMK -->
         addFactory { HideCategory(get()) }
         // KMK <--

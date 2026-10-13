@@ -1,0 +1,80 @@
+-- SyncYomi protocol v2 support.
+--
+-- Chapters are versioned and merged separately in v2; bumping the manga version on every chapter
+-- read let the device that read more chapters win all manga-level merges and silently revert the
+-- other device's category and tracking edits.
+DROP TRIGGER IF EXISTS update_chapter_and_manga_version;
+CREATE TRIGGER update_chapter_and_manga_version AFTER UPDATE ON chapters
+WHEN new.is_syncing = 0 AND (
+    new.read != old.read OR
+    new.bookmark != old.bookmark OR
+    new.last_page_read != old.last_page_read
+)
+BEGIN
+    UPDATE chapters SET version = version + 1
+    WHERE _id = new._id;
+END;
+
+-- Removing a manga from a category is a manga-level change and must bump its version too.
+CREATE TRIGGER IF NOT EXISTS delete_manga_category_update_version AFTER DELETE ON mangas_categories
+BEGIN
+    UPDATE mangas
+    SET version = version + 1
+    WHERE _id = old.manga_id AND (SELECT is_syncing FROM mangas WHERE _id = old.manga_id) = 0;
+END;
+
+-- A sync restore (is_syncing = 1) and the flag reset afterwards (old.is_syncing = 1) must not stamp
+-- last_modified_at, or every restored row is uploaded straight back by the next delta.
+DROP TRIGGER IF EXISTS update_last_modified_at_mangas;
+CREATE TRIGGER update_last_modified_at_mangas AFTER UPDATE ON mangas
+FOR EACH ROW
+WHEN new.is_syncing = 0 AND old.is_syncing = 0
+BEGIN
+  UPDATE mangas
+  SET last_modified_at = strftime('%s', 'now')
+  WHERE _id = new._id;
+END;
+
+DROP TRIGGER IF EXISTS update_last_modified_at_chapters;
+CREATE TRIGGER update_last_modified_at_chapters AFTER UPDATE ON chapters
+FOR EACH ROW
+WHEN new.is_syncing = 0 AND old.is_syncing = 0
+BEGIN
+  UPDATE chapters
+  SET last_modified_at = strftime('%s', 'now')
+  WHERE _id = new._id;
+END;
+
+-- A chapter the source just added has no timestamp yet; without one the next sync delta would
+-- treat it as "nothing changed" and never send it. Restored chapters keep the timestamp they
+-- arrived with, so a sync does not echo itself back.
+CREATE TRIGGER IF NOT EXISTS insert_chapter_last_modified_at AFTER INSERT ON chapters
+FOR EACH ROW
+WHEN new.last_modified_at = 0 AND new.is_syncing = 0
+BEGIN
+  UPDATE chapters
+  SET last_modified_at = strftime('%s', 'now')
+  WHERE _id = new._id;
+END;
+
+-- Categories get a stable sync identity (uid) and a merge version. Existing user categories get a
+-- random uid; the system category keeps uid 0 so every device maps it by its empty name.
+ALTER TABLE categories ADD COLUMN version INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE categories ADD COLUMN uid INTEGER NOT NULL DEFAULT 0;
+UPDATE categories SET uid = abs(random()) WHERE _id > 0 AND uid = 0;
+
+CREATE TRIGGER IF NOT EXISTS insert_category_uid AFTER INSERT ON categories
+WHEN new._id > 0
+BEGIN
+    UPDATE categories
+    SET uid = CASE WHEN uid = 0 THEN abs(random()) ELSE uid END
+    WHERE _id = new._id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS update_category_version AFTER UPDATE ON categories
+WHEN new.name != old.name OR new.sort != old.sort OR new.flags != old.flags OR new.hidden != old.hidden
+BEGIN
+    UPDATE categories
+    SET version = version + 1
+    WHERE _id = new._id;
+END;

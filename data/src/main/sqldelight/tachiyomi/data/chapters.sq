@@ -29,11 +29,28 @@ CREATE INDEX idx_chapters_url ON chapters(url);
 CREATE TRIGGER update_last_modified_at_chapters
 AFTER UPDATE ON chapters
 FOR EACH ROW
+-- KMK --> a sync restore (is_syncing = 1) and the flag reset afterwards must not stamp the row
+WHEN new.is_syncing = 0 AND old.is_syncing = 0
+-- KMK <--
 BEGIN
   UPDATE chapters
   SET last_modified_at = strftime('%s', 'now')
   WHERE _id = new._id;
 END;
+
+-- KMK -->
+-- A chapter the source just added has no timestamp yet; without one the next sync delta would
+-- treat it as "nothing changed" and never send it. Restored chapters (is_syncing = 1) keep the
+-- timestamp they arrived with, so a sync does not echo itself back.
+CREATE TRIGGER insert_chapter_last_modified_at AFTER INSERT ON chapters
+FOR EACH ROW
+WHEN new.last_modified_at = 0 AND new.is_syncing = 0
+BEGIN
+  UPDATE chapters
+  SET last_modified_at = strftime('%s', 'now')
+  WHERE _id = new._id;
+END;
+-- KMK <--
 
 CREATE TRIGGER update_chapter_and_manga_version AFTER UPDATE ON chapters
 WHEN new.is_syncing = 0 AND (
@@ -42,13 +59,13 @@ WHEN new.is_syncing = 0 AND (
     new.last_page_read != old.last_page_read
 )
 BEGIN
-    -- Update the chapter version
+    -- KMK -->
+    -- Update the chapter version only: chapters merge separately in protocol v2, and bumping the
+    -- manga version per chapter read made the device that read the most chapters win every
+    -- manga-level merge (silently reverting the other device's categories and tracking).
     UPDATE chapters SET version = version + 1
     WHERE _id = new._id;
-
-    -- Update the manga version
-    UPDATE mangas SET version = version + 1
-    WHERE _id = new.manga_id AND (SELECT is_syncing FROM mangas WHERE _id = new.manga_id) = 0;
+    -- KMK <--
 END;
 
 getChapterById:
@@ -146,7 +163,7 @@ WHERE is_syncing = 1;
 
 insert:
 INSERT INTO chapters(manga_id, url, name, scanlator, read, bookmark, last_page_read, chapter_number, source_order, date_fetch, date_upload, last_modified_at, version, is_syncing, memo)
-VALUES (:mangaId, :url, :name, :scanlator, :read, :bookmark, :lastPageRead, :chapterNumber, :sourceOrder, :dateFetch, :dateUpload, 0, :version, 0, :memo);
+VALUES (:mangaId, :url, :name, :scanlator, :read, :bookmark, :lastPageRead, :chapterNumber, :sourceOrder, :dateFetch, :dateUpload, :lastModifiedAt, :version, :isSyncing, :memo);
 
 update:
 UPDATE chapters
@@ -162,6 +179,9 @@ SET manga_id = coalesce(:mangaId, manga_id),
     date_fetch = coalesce(:dateFetch, date_fetch),
     date_upload = coalesce(:dateUpload, date_upload),
     version = coalesce(:version, version),
+    -- KMK -->
+    last_modified_at = coalesce(:lastModifiedAt, last_modified_at),
+    -- KMK <--
     is_syncing = coalesce(:isSyncing, is_syncing),
     memo = coalesce(:memo, memo)
 WHERE _id = :chapterId;
