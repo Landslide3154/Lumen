@@ -21,11 +21,19 @@ class Komga(id: Long) : BaseTracker(id, "Komga"), EnhancedTracker {
         const val UNREAD = 1L
         const val READING = 2L
         const val COMPLETED = 3L
+
+        // KMK -->
+        /** 追踪器只认这个 Komga 扩展，认证也借用它的账号（见 [KomgaAuthInterceptor]）。 */
+        const val SOURCE_CLASS = "eu.kanade.tachiyomi.extension.all.komga.Komga"
+        // KMK <--
     }
 
     override val client: OkHttpClient =
         networkService.client.newBuilder()
             .dns(Dns.SYSTEM) // don't use DNS over HTTPS as it breaks IP addressing
+            // KMK -->
+            .addInterceptor(KomgaAuthInterceptor())
+            // KMK <--
             .build()
 
     val api by lazy { KomgaApi(id, client) }
@@ -90,7 +98,9 @@ class Komga(id: Long) : BaseTracker(id, "Komga"), EnhancedTracker {
         saveCredentials("user", "pass")
     }
 
-    override fun getAcceptedSources() = listOf("eu.kanade.tachiyomi.extension.all.komga.Komga")
+    // KMK -->
+    override fun getAcceptedSources() = listOf(SOURCE_CLASS)
+    // KMK <--
 
     override suspend fun match(manga: Manga): TrackSearch? =
         try {
