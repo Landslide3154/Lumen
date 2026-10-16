@@ -21,3 +21,7 @@ local.properties
 /app/google-services.json
 *.jks
 app/standard/preview/*
+
+# Local-only agent notes (machine-private, never commit)
+/AGENTS.local.md
+/AGENTS.zh.md

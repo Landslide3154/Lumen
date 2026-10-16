@@ -1,6 +1,5 @@
-# Komikku – AI Agent Guide
-
-Komikku is an Android manga reader (min SDK 26, target SDK 36, JVM target 17 / Kotlin) forked from **Mihon** + **TachiyomiSY**. `applicationId`: `app.komikku` (debug: `app.komikku.dev`).
+# Lumen（Komikku 的 fork）– AI Agent Guide
+Lumen is an Android manga reader (Komikku fork) (min SDK 26, target SDK 36, JVM target 17 / Kotlin) forked from **Mihon** + **TachiyomiSY**. `applicationId`: `app.lumen` (debug: `app.lumen.dev`).
 
 Features: configurable reader, downloads/offline reading, trackers (MyAnimeList, AniList, Kitsu, MangaUpdates, Bangumi, Kavita, Komga, MangaDex, Shikimori, Suwayomi), recommendations, metadata editing, library categories/tags/filters, multi-source browsing and feed tabs.
 
@@ -10,9 +9,11 @@ Features: configurable reader, downloads/offline reading, trackers (MyAnimeList,
 |----------|-------------|---------|
 | Mihon | none (base code) | `MR` (`i18n/`) |
 | TachiyomiSY | `// SY -->` … `// SY <--` (legacy `// EXH` blocks also come from SY) | `SYMR` (`i18n-sy/`) |
-| **Komikku** (this repo) | `// KMK -->` … `// KMK <--` | `KMR` (`i18n-kmk/`) |
+| **Lumen** (this repo) | `// KMK -->` … `// KMK <--` | `KMR` (`i18n-kmk/`) |
 
 ---
+
+> **本机专属约定见 [`./AGENTS.local.md`](./AGENTS.local.md)**（本机路径、JDK / Android SDK、构建前提、内网地址、本机 git 口径）。该文件本机私有，不入版本库。
 
 ## Mandatory rules for AI agents
 
@@ -24,7 +25,7 @@ Features: configurable reader, downloads/offline reading, trackers (MyAnimeList,
 |------|-------------------|
 | Branch | Create a **feature branch** for the task (`git checkout -b <type>/<short-description>`, e.g. `feat/manga-recommendations`). |
 | Commit | **OK** on a feature branch when work is ready. **Never** commit directly to `master` / `main` unless the user explicitly asks. |
-| Push | **Never push unless the user explicitly asks**（本机全局 `C:\Users\godis\.dsh\AGENTS.md` §2 优先于本文件，2026-10-13）. When work is ready on a feature branch, commit locally and stop; report "committed, not pushed". **Never** push to `master` / `main` unless the user explicitly asks. |
+| Push | **Never push unless the user explicitly asks.** When work is ready on a feature branch, commit locally and stop; report "committed, not pushed". **Never** push to `master` / `main` unless the user explicitly asks. |
 
 Before `git push`, confirm the user asked for it, and that the current branch is not `master` or `main` (`git branch --show-current`).
 
