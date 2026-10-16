@@ -25,3 +25,6 @@ app/standard/preview/*
 # Local-only agent notes (machine-private, never commit)
 /AGENTS.local.md
 /AGENTS.zh.md
+
+# DSH 项目级技能链接（本机专属，不进版本库）
+.dsh/skills/
