@@ -69,7 +69,7 @@
 ```
 
 - 需要 **JDK 21**（版本见 `.github/.java-version`）；首次构建会下载约 1 GB 依赖
-- 开发约定、模块结构、上游同步规则见 [AGENTS.md](./AGENTS.md)
+- 开发约定与上游同步规则见 [AGENTS.md](./AGENTS.md)；技术栈、模块结构等完整参考见 [docs/agents-md-full-reference.md](./docs/agents-md-full-reference.md)
 - 交付版的 APK 由维护者在本地构建后附到 Release；本仓库的 GitHub Actions **当前全部停用**（`.github/workflows/build-apk.yml` 保留着，需要自动化时重新启用即可）
 
 ## 反馈问题
