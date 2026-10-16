@@ -1,6 +1,6 @@
 # Lumen（Komikku 的 fork）— AI 代理指南
 
-Lumen 是基于 **Mihon** + **TachiyomiSY** 的安卓漫画阅读器（Komikku fork）：minSdk 26 / targetSdk 36 / JVM 目标 17（Kotlin），`applicationId` = `app.lumen`（debug `app.lumen.dev`），构建用 JDK 21。
+Lumen 是基于 **Mihon** + **TachiyomiSY** 的安卓漫画阅读器（Komikku fork）：Kotlin，`applicationId` = `app.lumen`（debug `app.lumen.dev`），构建用 JDK 21；minSdk / targetSdk / JVM 目标等版本值以 `buildSrc/src/main/kotlin/mihon/buildlogic/AndroidConfig.kt` 为准（别在这儿写死）。
 本文件只写「必须怎么做」；查阅型内容见文末指针。
 
 | 上游 | 代码标记 | 字符串 |
@@ -49,7 +49,7 @@ Lumen 是基于 **Mihon** + **TachiyomiSY** 的安卓漫画阅读器（Komikku f
 ./gradlew assembleDebug    # 或 :app:compileDebugKotlin 仅编译检查
 ```
 
-Spotless + ktlint 配置在 `buildSrc/src/main/kotlin/mihon.code.lint.gradle.kts`。只有用户要求快速检查时才换 `compileDebugKotlin`；Spotless 照跑。`./gradlew` 是 Git Bash 写法，PowerShell 5.1 用 `.\gradlew.bat` 且没有 `&&`（见 `AGENTS.local.md`）。
+Spotless + ktlint 配置在 `buildSrc/src/main/kotlin/mihon.code.lint.gradle.kts`。只有用户要求快速检查时才换 `compileDebugKotlin`；Spotless 照跑。
 
 ## 指针
 
