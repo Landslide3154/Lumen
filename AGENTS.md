@@ -15,7 +15,7 @@ Lumen 是基于 **Mihon** + **TachiyomiSY** 的安卓漫画阅读器（Komikku f
 
 **Git**
 
-- 每个任务开特性分支（`git checkout -b <type>/<short-description>`）；用户没明确要求，**绝不**直接提交 `master` / `main`。
+- 每个任务开特性分支（`git checkout -b <type>/<short-description>`）；用户没明确要求，**绝不**直接提交默认分支 **`lumen`**（上游叫 `master` / `main`，本 fork 已改名，别照着上游文档找 `master`）。
 - 可本地提交；**用户没明确要求就绝不 push**：先 `git branch --show-current`，然后只汇报「已提交、未推送」。
 
 **KMK 标记**：对既有代码的每处 Komikku 新增或改动都必须包住：
