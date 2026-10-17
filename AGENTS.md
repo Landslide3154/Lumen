@@ -16,7 +16,7 @@ Lumen 是基于 **Mihon** + **TachiyomiSY** 的安卓漫画阅读器（Komikku f
 **Git**
 
 - 每个任务开特性分支（`git checkout -b <type>/<short-description>`）；用户没明确要求，**绝不**直接提交默认分支 **`lumen`**（上游叫 `master` / `main`，本 fork 已改名，别照着上游文档找 `master`）。
-- 可本地提交；**用户没明确要求就绝不 push**：先 `git branch --show-current`，然后只汇报「已提交、未推送」。
+- 可本地提交；**不要主动 push**——真要推之前先 `git branch --show-current`（口径见全局 `AGENTS.md` 的「Git 与 GitHub」节）。
 
 **KMK 标记**：对既有代码的每处 Komikku 新增或改动都必须包住：
 
@@ -50,6 +50,12 @@ Lumen 是基于 **Mihon** + **TachiyomiSY** 的安卓漫画阅读器（Komikku f
 ```
 
 Spotless + ktlint 配置在 `buildSrc/src/main/kotlin/mihon.code.lint.gradle.kts`。只有用户要求快速检查时才换 `compileDebugKotlin`；Spotless 照跑。
+
+## 常见坑
+
+- **Gradle OOM**：daemon 用 `-Xmx4g`（`gradle.properties`）；跑 `./gradlew --stop` 再试。
+- **Spotless / SQLDelight 报错**：先 `spotlessApply` 再 `spotlessCheck`；改过 `.sq` / `.sqm` 后跑 `./gradlew :data:generateSqlDelightInterface`。
+- **缺 `google-services.json` / `client_secrets.json`**：属 CI 机密；不加 `-Pinclude-telemetry` 的构建不需要它们。
 
 ## 指针
 
