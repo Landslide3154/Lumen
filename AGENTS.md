@@ -41,10 +41,7 @@ Lumen 是基于 **Mihon** + **TachiyomiSY** 的安卓漫画阅读器（Komikku f
 | TachiyomiSY | `// SY -->` … `// SY <--`（旧 `// EXH` 同源） | `SYMR`（`i18n-sy/`） |
 | **Lumen**（本仓库） | `// KMK -->` … `// KMK <--` | `KMR`（`i18n-kmk/`） |
 
-- **为什么要标记**：fork 要持续 cherry-pick 上游，标记让归属与冲突一眼可辨；所以新增只加 `KMK`，上游块不混入。
-- **为什么 `app_name` 例外**：应用显示名没有其它落点（`MR.strings.app_name` 与 Android 资源同名，改别处会 merge 冲突）。
-- **为什么版本值指向 `AndroidConfig.kt`**：多模块共用同一份构建逻辑，文档里硬编码必漂移。
-- **为什么 i18n 只动 `base/`**：非 `base` 语言由 Weblate 管理，本地改动会被下游覆盖。
+- **为什么这样定**（标记、`app_name` 例外、版本值指向 `AndroidConfig.kt`、i18n 只动 `base/`）→ [docs/fork-conventions-rationale.md](docs/fork-conventions-rationale.md)
 
 ## 5. 版本与发布
 
