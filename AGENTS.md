@@ -1,6 +1,6 @@
 # Lumen（Komikku 的 fork）— 开发约定
 
-> 跨机器通用规则见全局 `C:\Users\godis\.dsh\AGENTS.md`，本文件不重复。
+> 跨机器通用规则见全局 `~/.dsh/AGENTS.md`，本文件不重复。
 > 本机专属（JDK 21 切换、SDK、remote、`AGENTS.md` 合并保护）见同目录 `AGENTS.local.md`，不入库。
 > 本文件只写「必须怎么做」；查阅型内容见 §7 指针。
 
@@ -58,6 +58,6 @@ Lumen 是基于 **Mihon** + **TachiyomiSY** 的安卓漫画阅读器（Komikku f
 
 ## 7. 指针
 
-- 全局规则：`C:\Users\godis\.dsh\AGENTS.md`；本机专属：`./AGENTS.local.md`（JDK/SDK、remote、合并保护）。
+- 全局规则：`~/.dsh/AGENTS.md`；本机专属：`./AGENTS.local.md`（JDK/SDK、remote、合并保护）。
 - 上游全文参考（技术栈、模块布局、架构、构建与 CI、测试、关键文件、新增功能五步法、常见坑、cherry-pick）：`docs/agents-md-full-reference.md`；中文全文 `AGENTS.zh.md`（只读）。
 - 相关技能：上下文治理 `dsh-context-hygiene`；装/排查技能见 `dsh-tooling-setup`。
