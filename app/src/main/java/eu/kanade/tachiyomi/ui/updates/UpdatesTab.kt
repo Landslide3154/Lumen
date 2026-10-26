@@ -98,7 +98,10 @@ data object UpdatesTab : Tab {
             onClickCover = { item -> navigator.push(MangaScreen(item.update.mangaId)) },
             onSelectAll = screenModel::toggleAllSelection,
             onInvertSelection = screenModel::invertSelection,
-            onUpdateLibrary = screenModel::updateLibrary,
+            onUpdateLibrary = { screenModel.updateLibrary() },
+            // KMK -->
+            onUpdateLibraryFull = { screenModel.updateLibrary(full = true) },
+            // KMK <--
             onDownloadChapter = screenModel::downloadChapters,
             onMultiBookmarkClicked = screenModel::bookmarkUpdates,
             onMultiMarkAsReadClicked = screenModel::markUpdatesRead,

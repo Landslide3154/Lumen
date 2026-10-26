@@ -218,8 +218,11 @@ class UpdatesScreenModel(
             }
     }
 
-    fun updateLibrary(): Boolean {
-        val started = LibraryUpdateJob.startNow(Injekt.get<Application>())
+    fun updateLibrary(full: Boolean = false): Boolean {
+        // KMK -->
+        // 全量更新只影响本次任务：不改「更新方式」偏好，下次照旧按设置走。
+        val started = LibraryUpdateJob.startNow(Injekt.get<Application>(), forceFull = full)
+        // KMK <--
         screenModelScope.launch {
             _events.send(Event.LibraryUpdateTriggered(started))
         }

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.FlipToBack
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.SelectAll
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -35,6 +36,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
 import tachiyomi.presentation.core.components.material.PullRefresh
 import tachiyomi.presentation.core.components.material.Scaffold
@@ -62,6 +64,9 @@ fun UpdateScreen(
     onInvertSelection: () -> Unit,
     onCalendarClicked: () -> Unit,
     onUpdateLibrary: () -> Boolean,
+    // KMK -->
+    onUpdateLibraryFull: () -> Boolean,
+    // KMK <--
     onDownloadChapter: (List<UpdatesItem>, ChapterDownloadAction) -> Unit,
     onMultiBookmarkClicked: (List<UpdatesItem>, bookmark: Boolean) -> Unit,
     onMultiMarkAsReadClicked: (List<UpdatesItem>, read: Boolean) -> Unit,
@@ -89,6 +94,9 @@ fun UpdateScreen(
             UpdatesAppBar(
                 onCalendarClicked = { onCalendarClicked() },
                 onUpdateLibrary = { onUpdateLibrary() },
+                // KMK -->
+                onUpdateLibraryFull = { onUpdateLibraryFull() },
+                // KMK <--
                 onFilterClicked = { onFilterClicked() },
                 hasFilters = hasActiveFilters,
                 actionModeCounter = state.selected.size,
@@ -178,6 +186,9 @@ fun UpdateScreen(
 private fun UpdatesAppBar(
     onCalendarClicked: () -> Unit,
     onUpdateLibrary: () -> Unit,
+    // KMK -->
+    onUpdateLibraryFull: () -> Unit,
+    // KMK <--
     onFilterClicked: () -> Unit,
     hasFilters: Boolean,
     // For action mode
@@ -205,6 +216,13 @@ private fun UpdatesAppBar(
                         icon = Icons.Outlined.CalendarMonth,
                         onClick = onCalendarClicked,
                     ),
+                    // KMK -->
+                    AppBar.Action(
+                        title = stringResource(KMR.strings.action_update_library_full),
+                        icon = Icons.Outlined.Sync,
+                        onClick = onUpdateLibraryFull,
+                    ),
+                    // KMK <--
                     AppBar.Action(
                         title = stringResource(MR.strings.action_update_library),
                         icon = Icons.Outlined.Refresh,

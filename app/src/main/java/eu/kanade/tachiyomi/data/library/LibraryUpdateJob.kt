@@ -100,6 +100,7 @@ import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.track.interactor.InsertTrack
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.time.Instant
@@ -149,6 +150,9 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private var pendingKomga: KomgaIncrementalFilter.Outcome? = null
     private var pendingKomgaFailedIds: Set<Long> = emptySet()
     private var komgaFullLibraryRun = false
+
+    /** 更新页的「全量更新」按钮：本次任务跳过增量筛选，所有条目都重新拉取。 */
+    private val forceFull: Boolean get() = inputData.getBoolean(KEY_FORCE_FULL, false)
 
     private val komgaFilter by lazy {
         KomgaIncrementalFilter(
@@ -266,6 +270,14 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
      * 水位线只在整库更新时推进（局部更新提前推进会导致范围外的变化被漏掉）。
      */
     private fun commitKomgaIncrementalState() {
+        // 「全量更新」没有走增量筛选，也就没有增量诊断可写；把上一轮的摘要换成本次说明，
+        // 免得更新页还挂着「增量更新：…」让人以为这次也是增量。
+        if (forceFull) {
+            libraryPreferences.komgaFallbackReason().set("")
+            libraryPreferences.komgaSummary().set(context.stringResource(KMR.strings.updates_komga_full_run))
+            return
+        }
+
         val outcome = pendingKomga ?: return
 
         // 水位线只在整库更新时推进：局部更新时 Komga 上「本次范围之外」的变化还没被处理
@@ -420,7 +432,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         // KMK -->
         // 增量过滤对「整库」和「分类/分组更新」都生效（书架页下拉刷新的就是当前分类）；
         // 单本定向更新在前面就 return 了，永远不会被跳过。
-        if (libraryPreferences.incrementalUpdateMode().get() == LibraryUpdateMode.INCREMENTAL) {
+        if (!forceFull && libraryPreferences.incrementalUpdateMode().get() == LibraryUpdateMode.INCREMENTAL) {
             val fullLibrary = isFullLibraryUpdate(categoryId, group)
             komgaFullLibraryRun = fullLibrary
             val outcome = komgaFilter.apply(
@@ -839,6 +851,11 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
          * Key for specific manga IDs to update.
          */
         private const val KEY_MANGA_IDS = "manga_ids"
+
+        /**
+         * Key for skipping the incremental filter for this run (full update).
+         */
+        private const val KEY_FORCE_FULL = "force_full"
         // KMK <--
 
         fun setupTask(
@@ -903,6 +920,8 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             // SY <--
             // KMK -->
             mangaIds: List<Long>? = null,
+            /** 跳过增量筛选，整库重新拉取（更新页「全量更新」按钮）。 */
+            forceFull: Boolean = false,
             // KMK <--
         ): Boolean {
             val wm = context.workManager
@@ -921,6 +940,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                 // SY <--
                 // KMK -->
                 KEY_MANGA_IDS to mangaIds?.toLongArray(),
+                KEY_FORCE_FULL to forceFull,
                 // KMK <--
             )
 
